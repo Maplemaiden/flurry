@@ -6,6 +6,12 @@ export const IpcChannels = {
   CLOSE_HOME: 'fluffy:close-home',
   SET_CLICK_THROUGH: 'fluffy:set-click-through',
   MOVE_PET: 'fluffy:move-pet',
+  /** 读取桌宠当前窗口位置 */
+  GET_PET_BOUNDS: 'fluffy:get-pet-bounds',
+  /** 展开/收起桌宠快捷菜单时调整窗口大小 */
+  SET_PET_MENU_OPEN: 'fluffy:set-pet-menu-open',
+  /** 关闭小窝后轻唤桌宠（气泡提示） */
+  NUDGE_PET: 'fluffy:nudge-pet',
   /** 开始专注（可选覆盖分钟数） */
   START_FOCUS: 'fluffy:start-focus',
   /** 结束专注；natural=true 表示计时到点 */

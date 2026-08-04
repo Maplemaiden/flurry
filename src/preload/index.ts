@@ -18,6 +18,22 @@ const fluffyApi = {
   movePet: (bounds: PetWindowBounds): Promise<PetWindowBounds | null> =>
     ipcRenderer.invoke(IpcChannels.MOVE_PET, bounds),
 
+  getPetBounds: (): Promise<PetWindowBounds | null> =>
+    ipcRenderer.invoke(IpcChannels.GET_PET_BOUNDS),
+
+  setPetMenuOpen: (open: boolean): Promise<PetWindowBounds | null> =>
+    ipcRenderer.invoke(IpcChannels.SET_PET_MENU_OPEN, open),
+
+  nudgePet: (): Promise<AppState> => ipcRenderer.invoke(IpcChannels.NUDGE_PET),
+
+  onPetBlur: (callback: () => void): (() => void) => {
+    const listener = (): void => {
+      callback()
+    }
+    ipcRenderer.on('fluffy:pet-blur', listener)
+    return () => ipcRenderer.removeListener('fluffy:pet-blur', listener)
+  },
+
   startFocus: (minutes?: number): Promise<AppState> =>
     ipcRenderer.invoke(IpcChannels.START_FOCUS, minutes),
 

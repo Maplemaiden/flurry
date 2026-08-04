@@ -16,7 +16,12 @@
           <p class="home__brand">Flurry</p>
           <p class="home__subtitle" id="subtitle">温暖小窝</p>
         </div>
-        <p class="home__focus-timer" id="focus-timer" hidden></p>
+        <div class="home__header-right">
+          <p class="home__focus-timer" id="focus-timer" hidden></p>
+          <button type="button" class="home__back" id="back-desktop" title="关闭小窝，回到桌面猫咪">
+            返回桌面
+          </button>
+        </div>
       </header>
 
       <section class="home__stage" id="stage" aria-label="小家场景">
@@ -59,7 +64,7 @@
         </label>
         <label class="check">
           <input id="opt-clickthrough" type="checkbox" />
-          点击穿透
+          点击穿透（开启后请用托盘进小窝）
         </label>
       </section>
 
@@ -70,14 +75,22 @@
           名字
           <input id="cat-name" type="text" maxlength="12" placeholder="例如：年糕" />
         </label>
-        <button type="button" id="adopt-btn">领养</button>
+        <div class="onboard__actions">
+          <button type="button" id="adopt-btn">领养</button>
+          <button type="button" class="btn-ghost" id="onboard-later">先回桌面看看</button>
+        </div>
       </section>
 
       <section class="home__talk" id="talk-panel" hidden>
-        <button type="button" class="talk__close" id="talk-close" aria-label="关闭">×</button>
-        <input id="talk-input" type="text" placeholder="今天好累…" maxlength="80" />
-        <button type="button" id="talk-send">发送</button>
-        <p id="talk-reply" class="talk__reply"></p>
+        <header class="talk__header">
+          <h2 class="talk__title">和小猫说说话</h2>
+          <button type="button" class="talk__back" id="talk-close">返回小窝</button>
+        </header>
+        <p id="talk-reply" class="talk__reply">想说什么都可以，我在听。</p>
+        <div class="talk__composer">
+          <input id="talk-input" type="text" placeholder="今天好累…" maxlength="80" />
+          <button type="button" id="talk-send">发送</button>
+        </div>
       </section>
     </div>
     <script type="module" src="./main.ts"></script>

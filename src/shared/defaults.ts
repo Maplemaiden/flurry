@@ -22,6 +22,12 @@ export const PET_WINDOW = {
   height: 160
 } as const
 
+/** 桌宠快捷菜单展开时的窗口尺寸 */
+export const PET_MENU_WINDOW = {
+  width: 200,
+  height: 300
+} as const
+
 export const HOME_WINDOW = {
   width: 760,
   height: 640

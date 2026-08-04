@@ -1,11 +1,25 @@
 import { BrowserWindow, screen } from 'electron'
 import { join } from 'path'
-import { PET_WINDOW } from '../../shared/defaults'
+import { PET_MENU_WINDOW, PET_WINDOW } from '../../shared/defaults'
 
 let petWindow: BrowserWindow | null = null
+let menuOpen = false
 
 function isDev(): boolean {
   return !!process.env['ELECTRON_RENDERER_URL']
+}
+
+type Bounds = { x: number; y: number; width: number; height: number }
+
+function clampToWorkArea(bounds: Bounds): Bounds {
+  const point = {
+    x: Math.round(bounds.x + bounds.width / 2),
+    y: Math.round(bounds.y + bounds.height / 2)
+  }
+  const wa = screen.getDisplayNearestPoint(point).workArea
+  const x = Math.min(Math.max(bounds.x, wa.x), wa.x + wa.width - bounds.width)
+  const y = Math.min(Math.max(bounds.y, wa.y), wa.y + wa.height - bounds.height)
+  return { ...bounds, x, y }
 }
 
 export function getPetWindow(): BrowserWindow | null {
@@ -18,6 +32,7 @@ export function createPetWindow(): BrowserWindow {
   }
 
   const display = screen.getPrimaryDisplay().workArea
+  menuOpen = false
 
   petWindow = new BrowserWindow({
     width: PET_WINDOW.width,
@@ -54,6 +69,12 @@ export function createPetWindow(): BrowserWindow {
 
   petWindow.on('closed', () => {
     petWindow = null
+    menuOpen = false
+  })
+
+  petWindow.on('blur', () => {
+    if (!menuOpen || !petWindow || petWindow.isDestroyed()) return
+    petWindow.webContents.send('fluffy:pet-blur')
   })
 
   return petWindow
@@ -61,5 +82,37 @@ export function createPetWindow(): BrowserWindow {
 
 export function setPetClickThrough(enabled: boolean): void {
   if (!petWindow || petWindow.isDestroyed()) return
+  if (menuOpen && enabled) return
   petWindow.setIgnoreMouseEvents(enabled, { forward: true })
+}
+
+/** 展开菜单时向上加高窗口，收起时还原 */
+export function setPetMenuOpen(open: boolean): Bounds | null {
+  if (!petWindow || petWindow.isDestroyed()) return null
+
+  const current = petWindow.getBounds()
+  if (open === menuOpen) {
+    return { x: current.x, y: current.y, width: current.width, height: current.height }
+  }
+
+  menuOpen = open
+
+  if (open) {
+    const width = PET_MENU_WINDOW.width
+    const height = PET_MENU_WINDOW.height
+    const x = Math.round(current.x + (current.width - width) / 2)
+    const y = current.y + current.height - height
+    const next = clampToWorkArea({ x, y, width, height })
+    petWindow.setBounds(next)
+    petWindow.setIgnoreMouseEvents(false)
+    return next
+  }
+
+  const width = PET_WINDOW.width
+  const height = PET_WINDOW.height
+  const x = Math.round(current.x + (current.width - width) / 2)
+  const y = current.y + current.height - height
+  const next = clampToWorkArea({ x, y, width, height })
+  petWindow.setBounds(next)
+  return next
 }

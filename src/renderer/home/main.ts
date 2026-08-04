@@ -4,7 +4,6 @@ import { getUnlocked } from '../../shared/intimacy'
 import type { AmbientSound, AppState, HomeScene } from '../../shared/types'
 import {
   playAmbient,
-  playCelebrate,
   playMeow,
   playPurr,
   setMuted
@@ -34,6 +33,9 @@ const optClick = document.getElementById('opt-clickthrough') as HTMLInputElement
 let scene: HomeScene = 'default'
 let appState: AppState | null = null
 let timerTick: ReturnType<typeof setInterval> | null = null
+/** 临时文案/道具保护，避免被 render 立刻冲掉 */
+let feedbackUntil = 0
+let holdProp: { kind: string; emoji: string } | null = null
 
 function formatRemain(ms: number): string {
   const total = Math.max(0, Math.ceil(ms / 1000))
@@ -45,11 +47,24 @@ function formatRemain(ms: number): string {
 function setProp(kind: string | null, emoji = ''): void {
   if (!kind) {
     stageProp.hidden = true
+    stageProp.textContent = ''
     return
   }
   stageProp.hidden = false
   stageProp.dataset.kind = kind
   stageProp.textContent = emoji
+}
+
+function setFeedback(text: string, ms = 2000, prop?: { kind: string; emoji: string } | null): void {
+  stageHint.textContent = text
+  feedbackUntil = Date.now() + ms
+  if (prop === null) {
+    holdProp = null
+    setProp(null)
+  } else if (prop) {
+    holdProp = prop
+    setProp(prop.kind, prop.emoji)
+  }
 }
 
 function applyHook(hook: DialogueHook): void {
@@ -61,7 +76,7 @@ function applyHook(hook: DialogueHook): void {
   } else if (hook === 'nuzzle') {
     playPurr(400)
   } else if (hook === 'celebrate') {
-    playCelebrate()
+    playPurr(500)
   }
 }
 
@@ -76,6 +91,17 @@ function syncAmbient(state: AppState): void {
   } else {
     playAmbient('none')
   }
+}
+
+function syncActionButtons(state: AppState): void {
+  document.querySelectorAll<HTMLButtonElement>('.home__actions [data-action]').forEach((btn) => {
+    const action = btn.dataset.action
+    const active =
+      (action === 'sleep' && scene === 'sleep' && !state.focusActive) ||
+      (action === 'study' && scene === 'study' && !state.focusActive) ||
+      (action === 'focus' && state.focusActive)
+    btn.classList.toggle('is-active', Boolean(active))
+  })
 }
 
 function render(state: AppState): void {
@@ -106,28 +132,36 @@ function render(state: AppState): void {
   stageEl.classList.toggle('is-focus', state.focusActive)
   stageCat.classList.toggle('is-sleep', scene === 'sleep' || state.focusActive)
 
+  const holdingFeedback = Date.now() < feedbackUntil
+
   if (state.focusActive) {
-    setProp(null)
-    stageHint.textContent = '专注中… 我在安静陪着你'
+    if (!holdingFeedback) {
+      setProp(null)
+      stageHint.textContent = '专注中… 我在安静陪着你'
+    }
     focusBtn.textContent = '结束专注'
-    focusBtn.classList.add('is-active')
     focusTimerEl.hidden = false
   } else {
     focusBtn.textContent = '专注模式'
-    focusBtn.classList.remove('is-active')
     focusTimerEl.hidden = true
-    if (scene === 'sleep') {
+    if (holdingFeedback) {
+      if (holdProp) setProp(holdProp.kind, holdProp.emoji)
+    } else if (scene === 'sleep') {
+      holdProp = null
       setProp('sleep', '🛏️')
-      stageHint.textContent = '呼呼大睡中 · 可再点睡觉退出'
+      stageHint.textContent = '呼呼大睡中 · 再点「睡觉」可醒来'
     } else if (scene === 'study') {
+      holdProp = null
       setProp('study', '📖')
-      stageHint.textContent = '安静陪学中 · 可再点学习退出'
+      stageHint.textContent = '安静陪学中 · 再点「学习陪伴」可结束'
     } else {
+      holdProp = null
       setProp(null)
-      stageHint.textContent = '在这里照顾你的小猫'
+      stageHint.textContent = '在这里照顾你的小猫 · 右上角可返回桌面'
     }
   }
 
+  syncActionButtons(state)
   syncAmbient(state)
   updateFocusTimer()
 }
@@ -152,6 +186,19 @@ function updateFocusTimer(): void {
   }
 }
 
+async function backToDesktop(): Promise<void> {
+  await window.fluffy.nudgePet()
+  await window.fluffy.closeHome()
+}
+
+document.getElementById('back-desktop')?.addEventListener('click', () => {
+  void backToDesktop()
+})
+
+document.getElementById('onboard-later')?.addEventListener('click', () => {
+  void backToDesktop()
+})
+
 document.getElementById('adopt-btn')?.addEventListener('click', async () => {
   const name = catNameInput.value.trim().slice(0, 12) || 'Fluffy'
   const next = await window.fluffy.setState({
@@ -166,16 +213,17 @@ document.getElementById('adopt-btn')?.addEventListener('click', async () => {
   })
   playMeow()
   render(next)
+  setFeedback('领养成功！点右上角「返回桌面」找小猫', 4000)
 })
 
 document.querySelector('.home__actions')?.addEventListener('click', async (e) => {
-  const target = e.target as HTMLElement
-  const action = target.dataset.action
+  const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]')
+  const action = target?.dataset.action
   if (!action) return
 
   const state = await window.fluffy.getState()
   if (!state.cat && action !== 'talk') {
-    stageHint.textContent = '先领养一只小猫吧'
+    setFeedback('先领养一只小猫吧', 2000)
     return
   }
 
@@ -183,19 +231,19 @@ document.querySelector('.home__actions')?.addEventListener('click', async (e) =>
     case 'feed': {
       scene = 'default'
       stageCat.classList.add('is-eat')
-      setProp('food', '🐟')
-      stageHint.textContent = '好好吃～'
+      setFeedback('好好吃～', 1800, { kind: 'food', emoji: '🐟' })
       playPurr(500)
       await window.fluffy.noteInteraction(2)
       window.setTimeout(() => {
         stageCat.classList.remove('is-eat')
-        setProp(null)
+        holdProp = null
       }, 1600)
       break
     }
     case 'sleep': {
       if (scene === 'sleep') {
         scene = 'default'
+        setFeedback('醒啦～', 1600, null)
       } else {
         scene = 'sleep'
         await window.fluffy.noteInteraction(1)
@@ -205,6 +253,7 @@ document.querySelector('.home__actions')?.addEventListener('click', async (e) =>
     case 'study': {
       if (scene === 'study') {
         scene = 'default'
+        setFeedback('陪学结束啦', 1600, null)
       } else {
         scene = 'study'
         await window.fluffy.noteInteraction(1)
@@ -214,7 +263,7 @@ document.querySelector('.home__actions')?.addEventListener('click', async (e) =>
     case 'groom': {
       scene = 'default'
       stageCat.classList.add('is-groom')
-      stageHint.textContent = '梳得亮晶晶…'
+      setFeedback('梳得亮晶晶…', 1600)
       playPurr(450)
       await window.fluffy.noteInteraction(1)
       window.setTimeout(() => stageCat.classList.remove('is-groom'), 1400)
@@ -224,9 +273,11 @@ document.querySelector('.home__actions')?.addEventListener('click', async (e) =>
       if (state.focusActive) {
         await window.fluffy.stopFocus(false)
         scene = 'default'
+        setFeedback('已结束专注，随时可以再开始', 2500)
       } else {
         scene = 'study'
         await window.fluffy.startFocus()
+        setFeedback('专注开始啦，我会安静陪着你', 2500)
       }
       break
     }
@@ -260,22 +311,19 @@ talkInput.addEventListener('keydown', (e) => {
 
 document.getElementById('talk-close')?.addEventListener('click', () => {
   talkPanel.hidden = true
+  talkReply.textContent = '想说什么都可以，我在听。'
+  setFeedback('已回到小窝', 1600)
 })
 
-async function patchSettings(
-  patch: Partial<AppState['settings']>
-): Promise<void> {
+async function patchSettings(patch: Partial<AppState['settings']>): Promise<void> {
   const state = await window.fluffy.getState()
   const next = await window.fluffy.setState({
     settings: { ...state.settings, ...patch }
   })
-  if (patch.clickThrough !== undefined) {
-    await window.fluffy.setClickThrough(patch.clickThrough)
-  }
   render(next)
 }
 
-optOpacity.addEventListener('change', () => {
+optOpacity.addEventListener('input', () => {
   void patchSettings({ opacity: Number(optOpacity.value) })
 })
 optFocusMin.addEventListener('change', () => {
@@ -289,20 +337,23 @@ optMuted.addEventListener('change', () => {
 })
 optClick.addEventListener('change', () => {
   void patchSettings({ clickThrough: optClick.checked })
+  if (optClick.checked) {
+    setFeedback('已开启点击穿透：桌宠点不到时，用托盘打开小窝', 4000)
+  }
 })
 
 async function boot(): Promise<void> {
   const state = await window.fluffy.getState()
   render(state)
   window.fluffy.onStateChanged((s) => {
+    const wasFocus = appState?.focusActive
     if (s.focusActive) scene = 'study'
-    if (!s.focusActive && appState?.focusActive) {
-      // 自然结束庆祝已在桌宠侧；小窝给一句提示
-      if (s.pendingPetEvent === 'celebrate' || scene === 'study') {
-        stageHint.textContent = '专注结束啦，伸个懒腰庆祝～'
-        playCelebrate()
-      }
+    if (!s.focusActive && wasFocus) {
       scene = 'default'
+      // 庆祝音效由桌宠窗播放，这里只留文案，避免双响
+      if (s.pendingPetEvent === 'celebrate') {
+        setFeedback('专注结束啦！桌面上的小猫在庆祝～', 3500)
+      }
     }
     render(s)
   })

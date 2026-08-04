@@ -19,7 +19,7 @@ export type CatBehavior =
 export type HomeScene = 'default' | 'sleep' | 'study'
 
 /** 桌宠待播放的一次性事件（主进程写入，渲染进程消费后清空） */
-export type PendingPetEvent = 'celebrate' | 'warm-care' | 'greet' | null
+export type PendingPetEvent = 'celebrate' | 'warm-care' | 'greet' | 'home-back' | null
 
 export type AmbientSound = 'none' | 'rain' | 'soft-piano' | 'fire'
 

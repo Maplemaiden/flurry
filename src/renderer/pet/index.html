@@ -11,7 +11,17 @@
   </head>
   <body>
     <div id="app">
-      <div id="pet" class="pet" title="双击打开小窝 · 拖拽移动" role="img" aria-label="桌面猫咪">
+      <div id="menu-backdrop" class="menu-backdrop" hidden></div>
+
+      <div id="quick-menu" class="quick-menu" hidden>
+        <p class="quick-menu__title">Flurry</p>
+        <button type="button" data-menu="home">打开温暖小窝</button>
+        <button type="button" data-menu="pet">摸摸我</button>
+        <button type="button" data-menu="mute" id="menu-mute">静音</button>
+        <button type="button" data-menu="close">收起</button>
+      </div>
+
+      <div id="pet" class="pet" title="单击打开菜单 · 拖拽移动" role="img" aria-label="桌面猫咪">
         <div class="pet__body"></div>
         <div class="pet__ear pet__ear--left"></div>
         <div class="pet__ear pet__ear--right"></div>

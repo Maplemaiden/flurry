@@ -11,7 +11,7 @@ import {
 } from './focus'
 import { getState, setState } from './store'
 import { createHomeWindow, closeHomeWindow } from './windows/homeWindow'
-import { getPetWindow, setPetClickThrough } from './windows/petWindow'
+import { getPetWindow, setPetClickThrough, setPetMenuOpen } from './windows/petWindow'
 
 function clampPetBounds(bounds: PetWindowBounds): PetWindowBounds {
   const point = {
@@ -33,11 +33,10 @@ export function registerIpc(): void {
     const prev = getState()
     const next = setState(partial)
 
-    if (partial.settings?.clickThrough !== undefined) {
-      setPetClickThrough(next.settings.clickThrough)
-    } else if (
-      partial.settings &&
-      next.settings.clickThrough !== prev.settings.clickThrough
+    if (
+      partial.settings?.clickThrough !== undefined ||
+      (partial.settings &&
+        next.settings.clickThrough !== prev.settings.clickThrough)
     ) {
       setPetClickThrough(next.settings.clickThrough)
     }
@@ -69,6 +68,28 @@ export function registerIpc(): void {
     const clamped = clampPetBounds(bounds)
     pet.setBounds(clamped)
     return clamped
+  })
+
+  ipcMain.handle(IpcChannels.GET_PET_BOUNDS, () => {
+    const pet = getPetWindow()
+    if (!pet || pet.isDestroyed()) return null
+    const b = pet.getBounds()
+    return { x: b.x, y: b.y, width: b.width, height: b.height }
+  })
+
+  ipcMain.handle(IpcChannels.SET_PET_MENU_OPEN, (_event, open: boolean) => {
+    return setPetMenuOpen(Boolean(open))
+  })
+
+  ipcMain.handle(IpcChannels.NUDGE_PET, () => {
+    const pet = getPetWindow()
+    if (pet && !pet.isDestroyed()) {
+      pet.showInactive()
+      pet.moveTop()
+    }
+    const next = setState({ pendingPetEvent: 'home-back' })
+    broadcastState(next)
+    return next
   })
 
   ipcMain.handle(IpcChannels.START_FOCUS, (_event, minutes?: number) => startFocus(minutes))
