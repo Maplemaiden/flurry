@@ -21,11 +21,18 @@ function mergeState(base: AppState, partial: Partial<AppState>): AppState {
     ...(partial.settings ?? {})
   }
 
+  if (settings.opacity < 0.3) settings.opacity = 0.3
+  if (settings.opacity > 1) settings.opacity = 1
+  if (settings.focusMinutes < 1) settings.focusMinutes = 1
+  if (settings.focusMinutes > 180) settings.focusMinutes = 180
+
   let cat: CatProfile | null
   if (partial.cat === null) {
     cat = null
   } else if (partial.cat) {
     cat = { ...(base.cat ?? partial.cat), ...partial.cat }
+    cat.intimacy = Math.max(0, Math.min(100, Math.round(cat.intimacy)))
+    cat.name = cat.name.trim().slice(0, 12) || 'Fluffy'
   } else {
     cat = base.cat
   }
@@ -34,7 +41,19 @@ function mergeState(base: AppState, partial: Partial<AppState>): AppState {
     ...base,
     ...partial,
     settings,
-    cat
+    cat,
+    focusEndsAt:
+      partial.focusEndsAt === undefined ? base.focusEndsAt : partial.focusEndsAt,
+    lastInteractionAt:
+      partial.lastInteractionAt === undefined
+        ? base.lastInteractionAt
+        : partial.lastInteractionAt,
+    lastWarmCareAt:
+      partial.lastWarmCareAt === undefined ? base.lastWarmCareAt : partial.lastWarmCareAt,
+    pendingPetEvent:
+      partial.pendingPetEvent === undefined
+        ? base.pendingPetEvent
+        : partial.pendingPetEvent
   }
 }
 
@@ -42,13 +61,13 @@ export function getState(): AppState {
   const { dir, file } = paths()
   ensureDir(dir)
   if (!existsSync(file)) {
-    return { ...DEFAULT_STATE, settings: { ...DEFAULT_STATE.settings } }
+    return structuredClone(DEFAULT_STATE)
   }
   try {
     const raw = JSON.parse(readFileSync(file, 'utf-8')) as Partial<AppState>
-    return mergeState(DEFAULT_STATE, raw)
+    return mergeState(structuredClone(DEFAULT_STATE), raw)
   } catch {
-    return { ...DEFAULT_STATE, settings: { ...DEFAULT_STATE.settings } }
+    return structuredClone(DEFAULT_STATE)
   }
 }
 
@@ -63,7 +82,7 @@ export function setState(partial: Partial<AppState>): AppState {
 export function resetState(): AppState {
   const { dir, file } = paths()
   ensureDir(dir)
-  const fresh = { ...DEFAULT_STATE, settings: { ...DEFAULT_STATE.settings } }
+  const fresh = structuredClone(DEFAULT_STATE)
   writeFileSync(file, JSON.stringify(fresh, null, 2), 'utf-8')
   return fresh
 }

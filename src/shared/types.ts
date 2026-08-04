@@ -12,14 +12,21 @@ export type CatBehavior =
   | 'drag'
   | 'focus'
   | 'celebrate'
+  | 'knead'
+  | 'eat'
 
 /** 小家场景模式 */
 export type HomeScene = 'default' | 'sleep' | 'study'
 
+/** 桌宠待播放的一次性事件（主进程写入，渲染进程消费后清空） */
+export type PendingPetEvent = 'celebrate' | 'warm-care' | 'greet' | null
+
+export type AmbientSound = 'none' | 'rain' | 'soft-piano' | 'fire'
+
 export interface CatProfile {
   name: string
   personality: CatPersonality
-  /** 亲密度 0–100，MVP 轻量增长 */
+  /** 亲密度 0–100，MVP 只增不减 */
   intimacy: number
   createdAt: string
 }
@@ -27,19 +34,28 @@ export interface CatProfile {
 export interface AppSettings {
   /** 桌宠透明度 0.3–1 */
   opacity: number
-  /** 是否允许点击穿透（仅边缘可交互时可开） */
+  /** 点击穿透（托盘可关；逃生路径） */
   clickThrough: boolean
   /** 专注模式默认时长（分钟） */
   focusMinutes: number
   muted: boolean
+  /** 专注 / 睡眠环境音 */
+  ambient: AmbientSound
 }
 
 export interface AppState {
   onboardingDone: boolean
   cat: CatProfile | null
   settings: AppSettings
-  /** 专注模式是否进行中 */
   focusActive: boolean
+  /** 专注结束时间戳（ms）；未专注为 null */
+  focusEndsAt: number | null
+  /** 上次有效互动时间（ms） */
+  lastInteractionAt: number | null
+  /** 上次久坐暖心触发（ms） */
+  lastWarmCareAt: number | null
+  /** 待桌宠表演的一次性事件 */
+  pendingPetEvent: PendingPetEvent
 }
 
 export interface PetWindowBounds {
@@ -47,4 +63,10 @@ export interface PetWindowBounds {
   y: number
   width: number
   height: number
+}
+
+export interface IntimacyUnlock {
+  at: number
+  id: string
+  label: string
 }

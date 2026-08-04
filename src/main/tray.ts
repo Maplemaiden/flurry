@@ -1,11 +1,12 @@
 import { Menu, Tray, nativeImage, app } from 'electron'
 import { join } from 'path'
+import { getState, setState } from './store'
+import { broadcastState } from './focus'
 import { createHomeWindow } from './windows/homeWindow'
-import { getPetWindow } from './windows/petWindow'
+import { getPetWindow, setPetClickThrough } from './windows/petWindow'
 
 let tray: Tray | null = null
 
-/** 用 1×1 占位图；后续替换为正式托盘图标 */
 function createPlaceholderIcon(): Electron.NativeImage {
   const size = 16
   const canvas = Buffer.alloc(size * size * 4)
@@ -19,20 +20,9 @@ function createPlaceholderIcon(): Electron.NativeImage {
   return nativeImage.createFromBuffer(canvas, { width: size, height: size })
 }
 
-export function createTray(): Tray {
-  if (tray) return tray
-
-  const iconPath = join(__dirname, '../../resources/tray.png')
-  let icon = nativeImage.createEmpty()
-  try {
-    icon = nativeImage.createFromPath(iconPath)
-    if (icon.isEmpty()) icon = createPlaceholderIcon()
-  } catch {
-    icon = createPlaceholderIcon()
-  }
-
-  tray = new Tray(icon)
-  tray.setToolTip('Fluffy')
+function rebuildMenu(): void {
+  if (!tray) return
+  const state = getState()
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -48,6 +38,28 @@ export function createTray(): Tray {
         else pet.showInactive()
       }
     },
+    {
+      label: state.settings.clickThrough ? '关闭点击穿透' : '开启点击穿透',
+      click: () => {
+        const enabled = !getState().settings.clickThrough
+        setPetClickThrough(enabled)
+        const next = setState({
+          settings: { ...getState().settings, clickThrough: enabled }
+        })
+        broadcastState(next)
+        rebuildMenu()
+      }
+    },
+    {
+      label: state.settings.muted ? '取消静音' : '静音',
+      click: () => {
+        const next = setState({
+          settings: { ...getState().settings, muted: !getState().settings.muted }
+        })
+        broadcastState(next)
+        rebuildMenu()
+      }
+    },
     { type: 'separator' },
     {
       label: '退出',
@@ -58,6 +70,23 @@ export function createTray(): Tray {
   ])
 
   tray.setContextMenu(contextMenu)
+}
+
+export function createTray(): Tray {
+  if (tray) return tray
+
+  const iconPath = join(__dirname, '../../resources/tray.png')
+  let icon = nativeImage.createEmpty()
+  try {
+    icon = nativeImage.createFromPath(iconPath)
+    if (icon.isEmpty()) icon = createPlaceholderIcon()
+  } catch {
+    icon = createPlaceholderIcon()
+  }
+
+  tray = new Tray(icon)
+  tray.setToolTip('Flurry')
+  rebuildMenu()
   tray.on('double-click', () => createHomeWindow())
 
   return tray

@@ -1,8 +1,9 @@
 import { app, BrowserWindow } from 'electron'
+import { hydrateFocusOnLaunch, startWarmCareWatcher } from './focus'
 import { registerIpc } from './ipc'
+import { getState, setState } from './store'
 import { createTray } from './tray'
 import { createPetWindow, setPetClickThrough } from './windows/petWindow'
-import { getState } from './store'
 
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
@@ -12,12 +13,17 @@ if (!gotLock) {
     const pet = BrowserWindow.getAllWindows()[0]
     if (pet) {
       if (pet.isMinimized()) pet.restore()
-      pet.focus()
+      pet.showInactive()
     }
   })
 
   app.whenReady().then(() => {
+    // 每次启动给一次迎接事件（桌宠消费）
+    setState({ pendingPetEvent: 'greet' })
+
     registerIpc()
+    hydrateFocusOnLaunch()
+    startWarmCareWatcher()
     createTray()
     createPetWindow()
 
@@ -33,8 +39,7 @@ if (!gotLock) {
     })
   })
 
-  // 桌宠常驻：关闭所有窗口时不退出（托盘保活）；macOS 除外惯例另议
   app.on('window-all-closed', () => {
-    // 保留托盘进程；用户从托盘选「退出」才真正退出
+    // 托盘保活
   })
 }

@@ -23,7 +23,7 @@ export function createHomeWindow(): BrowserWindow {
     height: HOME_WINDOW.height,
     minWidth: 560,
     minHeight: 420,
-    title: 'Fluffy — 温暖小窝',
+    title: 'Flurry — 温暖小窝',
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#f3ebe2',

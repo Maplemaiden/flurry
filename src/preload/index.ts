@@ -15,10 +15,21 @@ const fluffyApi = {
   setClickThrough: (enabled: boolean): Promise<AppState> =>
     ipcRenderer.invoke(IpcChannels.SET_CLICK_THROUGH, enabled),
 
-  movePet: (bounds: PetWindowBounds): Promise<void> =>
+  movePet: (bounds: PetWindowBounds): Promise<PetWindowBounds | null> =>
     ipcRenderer.invoke(IpcChannels.MOVE_PET, bounds),
 
+  startFocus: (minutes?: number): Promise<AppState> =>
+    ipcRenderer.invoke(IpcChannels.START_FOCUS, minutes),
+
+  stopFocus: (natural?: boolean): Promise<AppState> =>
+    ipcRenderer.invoke(IpcChannels.STOP_FOCUS, natural),
+
   toggleFocus: (): Promise<AppState> => ipcRenderer.invoke(IpcChannels.TOGGLE_FOCUS),
+
+  clearPetEvent: (): Promise<AppState> => ipcRenderer.invoke(IpcChannels.CLEAR_PET_EVENT),
+
+  noteInteraction: (intimacyDelta?: number): Promise<AppState> =>
+    ipcRenderer.invoke(IpcChannels.NOTE_INTERACTION, intimacyDelta),
 
   onStateChanged: (callback: (state: AppState) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, state: AppState): void => {

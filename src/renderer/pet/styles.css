@@ -30,20 +30,73 @@ body {
   position: relative;
   cursor: grab;
   animation: breathe 3.2s ease-in-out infinite;
+  transform-origin: 50% 80%;
 }
 
 .pet:active {
   cursor: grabbing;
 }
 
-.pet.is-sleep .pet__eye {
+.pet.is-sleep,
+.pet.is-focus {
+  animation-duration: 5.5s;
+}
+
+.pet.is-sleep .pet__eye,
+.pet.is-focus .pet__eye {
   height: 3px;
   border-radius: 2px;
 }
 
 .pet.is-focus {
-  animation-duration: 5s;
-  opacity: 0.85;
+  opacity: 0.88;
+}
+
+.pet.is-drag {
+  animation: none;
+  transform: scale(1.06) rotate(-6deg);
+}
+
+.pet.is-pet .pet__eye {
+  height: 4px;
+  border-radius: 2px;
+}
+
+.pet.is-pet {
+  animation: squish 0.45s ease;
+}
+
+.pet.is-yawn {
+  animation: stretch 1.4s ease;
+}
+
+.pet.is-groom {
+  animation: groom 2s ease;
+}
+
+.pet.is-walk {
+  animation: toddle 2.2s ease;
+}
+
+.pet.is-celebrate {
+  animation: bounce 0.7s ease infinite;
+}
+
+.pet.is-celebrate::after {
+  content: '❀';
+  position: absolute;
+  top: -6px;
+  right: 4px;
+  font-size: 14px;
+  color: #c4785a;
+}
+
+.pet.is-knead {
+  animation: knead 0.8s ease infinite;
+}
+
+.pet.is-eat {
+  animation: squish 0.6s ease infinite;
 }
 
 .pet__body {
@@ -95,7 +148,7 @@ body {
   bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  max-width: 140px;
+  max-width: 148px;
   padding: 6px 10px;
   border-radius: 12px;
   background: rgba(255, 252, 248, 0.92);
@@ -114,5 +167,71 @@ body {
   }
   50% {
     transform: translateY(2px) scale(1.02);
+  }
+}
+
+@keyframes squish {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08, 0.92);
+  }
+}
+
+@keyframes stretch {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12, 0.88);
+  }
+}
+
+@keyframes groom {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-8deg);
+  }
+  60% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes toddle {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px) rotate(-3deg);
+  }
+  75% {
+    transform: translateX(4px) rotate(3deg);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes knead {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.05, 0.94);
   }
 }
