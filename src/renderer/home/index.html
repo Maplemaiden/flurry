@@ -82,15 +82,20 @@
       </section>
 
       <section class="home__talk" id="talk-panel" hidden>
-        <header class="talk__header">
-          <h2 class="talk__title">和小猫说说话</h2>
-          <button type="button" class="talk__back" id="talk-close">返回小窝</button>
+        <header class="talk__top">
+          <button type="button" class="talk__back" id="talk-close">← 返回小窝</button>
         </header>
-        <p id="talk-reply" class="talk__reply">想说什么都可以，我在听。</p>
-        <div class="talk__composer">
-          <input id="talk-input" type="text" placeholder="今天好累…" maxlength="80" />
-          <button type="button" id="talk-send">发送</button>
+        <div class="talk__body">
+          <p class="talk__eyebrow">说说话</p>
+          <h2 class="talk__heading">想和我说点什么？</h2>
+          <div id="talk-reply" class="talk__bubble" role="status">
+            想说什么都可以，我在听。
+          </div>
         </div>
+        <footer class="talk__footer">
+          <input id="talk-input" type="text" placeholder="例如：今天好累…" maxlength="80" />
+          <button type="button" id="talk-send">发送</button>
+        </footer>
       </section>
     </div>
     <script type="module" src="./main.ts"></script>
