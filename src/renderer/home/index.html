@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluffy — 温暖小窝</title>
+  </head>
+  <body>
+    <div id="app" class="home">
+      <header class="home__header">
+        <p class="home__brand">Fluffy</p>
+        <p class="home__subtitle" id="subtitle">温暖小窝</p>
+      </header>
+
+      <section class="home__stage" aria-label="小家场景">
+        <div class="stage__cat" id="stage-cat"></div>
+        <p class="stage__hint" id="stage-hint">在这里照顾你的小猫</p>
+      </section>
+
+      <nav class="home__actions" aria-label="互动">
+        <button type="button" data-action="feed">喂养</button>
+        <button type="button" data-action="sleep">睡觉</button>
+        <button type="button" data-action="study">学习陪伴</button>
+        <button type="button" data-action="focus">专注模式</button>
+        <button type="button" data-action="talk">说说话</button>
+      </nav>
+
+      <section class="home__onboard" id="onboard" hidden>
+        <h1>遇见你的猫</h1>
+        <p>给它起个名字，开始一段温柔陪伴。</p>
+        <label>
+          名字
+          <input id="cat-name" type="text" maxlength="12" placeholder="例如：年糕" />
+        </label>
+        <button type="button" id="adopt-btn">领养</button>
+      </section>
+
+      <section class="home__talk" id="talk-panel" hidden>
+        <input id="talk-input" type="text" placeholder="今天好累…" maxlength="80" />
+        <button type="button" id="talk-send">发送</button>
+        <p id="talk-reply" class="talk__reply"></p>
+      </section>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
