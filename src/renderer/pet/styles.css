@@ -203,6 +203,10 @@ body {
   white-space: normal;
 }
 
+.bubble[hidden] {
+  display: none !important;
+}
+
 
 .pet:active {
   cursor: grabbing;

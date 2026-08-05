@@ -475,7 +475,7 @@ optMuted.addEventListener('change', () => {
 optClick.addEventListener('change', () => {
   void patchSettings({ clickThrough: optClick.checked })
   if (optClick.checked) {
-    setFeedback('已开启点击穿透：可移入猫身点击，或按 Ctrl+Alt+P / 托盘紧急唤回', 4500)
+    setFeedback('已开启点击穿透：桌宠点不到也拖不动；用 Ctrl+Alt+P 或托盘关闭。重启后会自动关闭穿透', 5000)
   }
 })
 

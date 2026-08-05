@@ -1,5 +1,5 @@
 import { app, BrowserWindow, globalShortcut } from 'electron'
-import { hydrateFocusOnLaunch, startWarmCareWatcher } from './focus'
+import { broadcastState, hydrateFocusOnLaunch, startWarmCareWatcher } from './focus'
 import { registerIpc } from './ipc'
 import { getState, setState } from './store'
 import { createTray, registerEscapeShortcut } from './tray'
@@ -31,15 +31,17 @@ if (!gotLock) {
     startWarmCareWatcher()
     createTray()
     registerEscapeShortcut()
-    createPetWindow()
 
-    const state = getState()
-    if (state.settings.clickThrough) {
-      setPetClickThrough(true)
-    }
+    // 每次启动强制关闭穿透，避免重启后残留“仍可拖拽 / 状态错乱”
+    const bootState = setState({
+      settings: { ...getState().settings, clickThrough: false }
+    })
+    createPetWindow()
+    setPetClickThrough(false)
+    broadcastState(bootState)
 
     // 未领养时打开小窝；可用「返回桌面」关掉
-    if (!state.onboardingDone || !state.cat) {
+    if (!bootState.onboardingDone || !bootState.cat) {
       createHomeWindow()
     }
 

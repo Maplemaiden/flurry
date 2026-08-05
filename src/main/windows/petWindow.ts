@@ -27,12 +27,8 @@ function clampToWorkArea(bounds: Bounds): Bounds {
 
 function applyIgnoreMouse(ignore: boolean): void {
   if (!petWindow || petWindow.isDestroyed()) return
-  // 菜单打开时必须可点；穿透开启时用 forward，便于热区侦测鼠标移入
-  if (ignore) {
-    petWindow.setIgnoreMouseEvents(true, { forward: true })
-  } else {
-    petWindow.setIgnoreMouseEvents(false)
-  }
+  // 穿透必须是完整忽略：不要 { forward:true }，否则热区/移入事件会把穿透打穿
+  petWindow.setIgnoreMouseEvents(ignore)
 }
 
 export function getPetWindow(): BrowserWindow | null {
@@ -59,6 +55,8 @@ export function createPetWindow(): BrowserWindow {
     frame: false,
     transparent: true,
     thickFrame: false,
+    // 桌宠不抢焦点，避免 Windows 给透明无边框窗画出一条空标题栏（常呈蓝色）
+    focusable: false,
     movable: false,
     roundedCorners: false,
     backgroundColor: '#00000000',
@@ -72,7 +70,7 @@ export function createPetWindow(): BrowserWindow {
     hasShadow: false,
     useContentSize: true,
     paintWhenInitiallyHidden: true,
-    title: '',
+    title: 'Flurry Pet',
     autoHideMenuBar: true,
     show: false,
     webPreferences: {
@@ -85,6 +83,8 @@ export function createPetWindow(): BrowserWindow {
   })
 
   petWindow.setBackgroundColor('#00000000')
+  petWindow.setMenuBarVisibility(false)
+  petWindow.removeMenu()
 
   petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
   petWindow.setAlwaysOnTop(true, 'screen-saver')
@@ -97,6 +97,8 @@ export function createPetWindow(): BrowserWindow {
 
   petWindow.once('ready-to-show', () => {
     petWindow?.showInactive()
+    // 再钉一次，压住 Windows 偶发画出的标题栏残影
+    petWindow?.setMaximizable(false)
     if (clickThroughDesired) applyIgnoreMouse(true)
   })
 
@@ -106,8 +108,18 @@ export function createPetWindow(): BrowserWindow {
   })
 
   petWindow.on('blur', () => {
+    // Electron/Windows 已知：透明无边框窗失焦时可能冒出空标题栏
+    if (petWindow && !petWindow.isDestroyed()) {
+      petWindow.setMaximizable(false)
+    }
     if (!menuOpen || !petWindow || petWindow.isDestroyed()) return
     petWindow.webContents.send('fluffy:pet-blur')
+  })
+
+  petWindow.on('focus', () => {
+    if (petWindow && !petWindow.isDestroyed()) {
+      petWindow.setMaximizable(false)
+    }
   })
 
   return petWindow
@@ -121,8 +133,8 @@ export function setPetClickThrough(enabled: boolean): void {
 }
 
 /**
- * 穿透模式下的临时热区：鼠标移入猫身时可点，移出后恢复穿透。
- * 不改写 settings.clickThrough。
+ * 临时开关窗口鼠标忽略（例如菜单打开时）。
+ * 仅在 clickThroughDesired 为 true 时才会重新进入穿透。
  */
 export function setPetMousePassthrough(ignore: boolean): void {
   if (!petWindow || petWindow.isDestroyed()) return

@@ -41,11 +41,16 @@ let lastChatMessage: string | null = null
 let autoCloseTimer: ReturnType<typeof setTimeout> | null = null
 /** 猫睡觉时维持的 setTimeout */
 let sleepBubbleTimer: ReturnType<typeof setTimeout> | null = null
-let passthroughIgnore = true
 
 function showBubble(text: string, ms = 2400): void {
+  const content = text.trim()
+  if (!content) {
+    bubbleEl.hidden = true
+    bubbleEl.textContent = ''
+    return
+  }
   bubbleEl.hidden = false
-  bubbleEl.textContent = text
+  bubbleEl.textContent = content
   if (bubbleTimer) clearTimeout(bubbleTimer)
   bubbleTimer = setTimeout(() => {
     bubbleEl.hidden = true
@@ -66,12 +71,6 @@ function syncMuteLabel(state: AppState): void {
   muteBtn.textContent = state.settings.muted ? '取消静音' : '静音'
 }
 
-async function setPassthrough(ignore: boolean): Promise<void> {
-  if (passthroughIgnore === ignore) return
-  passthroughIgnore = ignore
-  await window.fluffy.setPetMousePassthrough(ignore)
-}
-
 async function openMenu(nested = false): Promise<void> {
   if (menuOpen && nested === nestedOpen) return
   menuOpen = true
@@ -79,7 +78,6 @@ async function openMenu(nested = false): Promise<void> {
   menuEl.hidden = false
   interactEl.hidden = !nested
   backdropEl.hidden = false
-  await setPassthrough(false)
   const next = await window.fluffy.setPetMenuOpen(true, nested)
   if (next) lastBounds = next
   if (appState) syncMuteLabel(appState)
@@ -96,10 +94,6 @@ async function closeMenu(): Promise<void> {
   cancelAutoClose()
   const next = await window.fluffy.setPetMenuOpen(false)
   if (next) lastBounds = next
-  if (appState?.settings.clickThrough) {
-    passthroughIgnore = true
-    await window.fluffy.setPetMousePassthrough(true)
-  }
 }
 
 async function toggleNested(): Promise<void> {
@@ -320,18 +314,6 @@ function placeholder(name: string): void {
   showBubble(`${name}…（敬请期待）`, 1800)
 }
 
-/* ---------- 穿透热区：鼠标移入猫身时可点，移出恢复穿透 ---------- */
-
-petEl.addEventListener('mouseenter', () => {
-  if (!appState?.settings.clickThrough || menuOpen) return
-  void setPassthrough(false)
-})
-
-petEl.addEventListener('mouseleave', () => {
-  if (!appState?.settings.clickThrough || menuOpen || drag || stroke?.active) return
-  void setPassthrough(true)
-})
-
 /* ---------- 指针交互：头部抚摸 / 身体移动 ---------- */
 
 function isHeadTarget(target: EventTarget | null): boolean {
@@ -397,7 +379,6 @@ petEl.addEventListener('pointerup', () => {
   if (stroke?.active) {
     stroke.active = false
     stroke = null
-    if (appState?.settings.clickThrough && !menuOpen) void setPassthrough(true)
     return
   }
 
@@ -408,7 +389,6 @@ petEl.addEventListener('pointerup', () => {
   if (wasDrag) {
     machine.set(appState?.focusActive ? 'focus' : 'idle')
   }
-  if (appState?.settings.clickThrough && !menuOpen) void setPassthrough(true)
 })
 
 petEl.addEventListener('dblclick', () => {
