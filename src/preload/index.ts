@@ -15,6 +15,10 @@ const fluffyApi = {
   setClickThrough: (enabled: boolean): Promise<AppState> =>
     ipcRenderer.invoke(IpcChannels.SET_CLICK_THROUGH, enabled),
 
+  /** 穿透热区：true=忽略鼠标穿透，false=临时可点猫 */
+  setPetMousePassthrough: (ignore: boolean): Promise<void> =>
+    ipcRenderer.invoke(IpcChannels.SET_PET_MOUSE_PASSTHROUGH, ignore),
+
   movePet: (bounds: PetWindowBounds): Promise<PetWindowBounds | null> =>
     ipcRenderer.invoke(IpcChannels.MOVE_PET, bounds),
 

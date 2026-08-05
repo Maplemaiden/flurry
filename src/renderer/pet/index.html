@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title></title>
@@ -41,14 +41,9 @@
       </div>
 
       <div id="pet" class="pet" title="双击打开菜单 · 拖动头部抚摸 · 拖动身体移动" role="img" aria-label="桌面猫咪">
+        <img class="pet__shadow" alt="" draggable="false" />
+        <img id="pet-sprite" class="pet__sprite" alt="猫" draggable="false" />
         <div class="pet__head-zone" id="pet-head" title="左右拖动抚摸"></div>
-        <div class="pet__body"></div>
-        <div class="pet__ear pet__ear--left"></div>
-        <div class="pet__ear pet__ear--right"></div>
-        <div class="pet__face">
-          <span class="pet__eye"></span>
-          <span class="pet__eye"></span>
-        </div>
       </div>
       <p id="bubble" class="bubble" hidden></p>
     </div>

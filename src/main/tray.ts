@@ -1,4 +1,4 @@
-import { Menu, Tray, nativeImage, app, nativeTheme } from 'electron'
+import { Menu, Tray, nativeImage, app, nativeTheme, globalShortcut } from 'electron'
 import { existsSync } from 'fs'
 import { join } from 'path'
 import { getState, setState } from './store'
@@ -8,17 +8,22 @@ import { getPetWindow, setPetClickThrough } from './windows/petWindow'
 
 let tray: Tray | null = null
 
+/** 穿透锁死时的全局逃生快捷键 */
+export const ESCAPE_ACCELERATOR = 'CommandOrControl+Alt+P'
+
 function resolveTrayIcon(): Electron.NativeImage {
   const candidates = [
     join(__dirname, '../../resources/tray.png'),
-    join(process.cwd(), 'resources/tray.png')
+    join(__dirname, '../../resources/art/05_托盘图标/猫爪_32.png'),
+    join(__dirname, '../../resources/art/05_托盘图标/猫爪_16.png'),
+    join(process.cwd(), 'resources/tray.png'),
+    join(process.cwd(), 'resources/art/05_托盘图标/猫爪_32.png')
   ]
 
   for (const iconPath of candidates) {
     if (!existsSync(iconPath)) continue
     const img = nativeImage.createFromPath(iconPath)
     if (!img.isEmpty()) {
-      // Windows 托盘常用 16×16
       return img.resize({ width: 16, height: 16 })
     }
   }
@@ -41,6 +46,17 @@ function resolveTrayIcon(): Electron.NativeImage {
     }
   }
   return nativeImage.createFromBuffer(buf, { width: size, height: size })
+}
+
+/** 关闭穿透并打开小窝——保证用户不会被锁死 */
+export function escapeClickThrough(): void {
+  setPetClickThrough(false)
+  const next = setState({
+    settings: { ...getState().settings, clickThrough: false }
+  })
+  broadcastState(next)
+  createHomeWindow()
+  rebuildMenu()
 }
 
 function rebuildMenu(): void {
@@ -75,6 +91,10 @@ function rebuildMenu(): void {
       }
     },
     {
+      label: `紧急唤回（${ESCAPE_ACCELERATOR.replace('CommandOrControl', 'Ctrl')}）`,
+      click: () => escapeClickThrough()
+    },
+    {
       label: state.settings.muted ? '取消静音' : '静音',
       click: () => {
         const next = setState({
@@ -96,18 +116,26 @@ function rebuildMenu(): void {
   tray.setContextMenu(contextMenu)
 }
 
+export function registerEscapeShortcut(): void {
+  globalShortcut.unregisterAll()
+  const ok = globalShortcut.register(ESCAPE_ACCELERATOR, () => {
+    escapeClickThrough()
+  })
+  if (!ok) {
+    console.warn(`[fluffy] failed to register shortcut ${ESCAPE_ACCELERATOR}`)
+  }
+}
+
 export function createTray(): Tray {
   if (tray) return tray
 
-  // 避免被系统配色弄成“看不见”
   void nativeTheme.shouldUseDarkColors
 
   const icon = resolveTrayIcon()
   tray = new Tray(icon)
-  tray.setToolTip('Flurry — 右键或左键打开菜单')
+  tray.setToolTip('Flurry — 右键菜单 · 穿透锁死时按 Ctrl+Alt+P 唤回')
   rebuildMenu()
 
-  // Windows：左键经常点不到右键菜单，两边都弹出
   tray.on('click', () => {
     rebuildMenu()
     tray?.popUpContextMenu()
@@ -120,3 +148,5 @@ export function createTray(): Tray {
 
   return tray
 }
+
+export { rebuildMenu }

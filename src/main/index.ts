@@ -1,8 +1,8 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, globalShortcut } from 'electron'
 import { hydrateFocusOnLaunch, startWarmCareWatcher } from './focus'
 import { registerIpc } from './ipc'
 import { getState, setState } from './store'
-import { createTray } from './tray'
+import { createTray, registerEscapeShortcut } from './tray'
 import { createHomeWindow } from './windows/homeWindow'
 import { createPetWindow, getPetWindow, setPetClickThrough } from './windows/petWindow'
 
@@ -30,6 +30,7 @@ if (!gotLock) {
     hydrateFocusOnLaunch()
     startWarmCareWatcher()
     createTray()
+    registerEscapeShortcut()
     createPetWindow()
 
     const state = getState()
@@ -47,6 +48,10 @@ if (!gotLock) {
         createPetWindow()
       }
     })
+  })
+
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll()
   })
 
   app.on('window-all-closed', () => {

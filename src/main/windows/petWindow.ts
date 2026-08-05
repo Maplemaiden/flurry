@@ -1,9 +1,12 @@
 import { BrowserWindow, screen } from 'electron'
 import { join } from 'path'
 import { PET_MENU_WINDOW, PET_MENU_WINDOW_NESTED, PET_WINDOW } from '../../shared/defaults'
+import { getState } from '../store'
 
 let petWindow: BrowserWindow | null = null
 let menuOpen = false
+/** 用户设置的点击穿透（与菜单临时可点状态分开） */
+let clickThroughDesired = false
 
 function isDev(): boolean {
   return !!process.env['ELECTRON_RENDERER_URL']
@@ -22,8 +25,22 @@ function clampToWorkArea(bounds: Bounds): Bounds {
   return { ...bounds, x, y }
 }
 
+function applyIgnoreMouse(ignore: boolean): void {
+  if (!petWindow || petWindow.isDestroyed()) return
+  // 菜单打开时必须可点；穿透开启时用 forward，便于热区侦测鼠标移入
+  if (ignore) {
+    petWindow.setIgnoreMouseEvents(true, { forward: true })
+  } else {
+    petWindow.setIgnoreMouseEvents(false)
+  }
+}
+
 export function getPetWindow(): BrowserWindow | null {
   return petWindow
+}
+
+export function isPetClickThroughDesired(): boolean {
+  return clickThroughDesired
 }
 
 export function createPetWindow(): BrowserWindow {
@@ -80,6 +97,7 @@ export function createPetWindow(): BrowserWindow {
 
   petWindow.once('ready-to-show', () => {
     petWindow?.showInactive()
+    if (clickThroughDesired) applyIgnoreMouse(true)
   })
 
   petWindow.on('closed', () => {
@@ -96,9 +114,37 @@ export function createPetWindow(): BrowserWindow {
 }
 
 export function setPetClickThrough(enabled: boolean): void {
+  clickThroughDesired = enabled
   if (!petWindow || petWindow.isDestroyed()) return
   if (menuOpen && enabled) return
-  petWindow.setIgnoreMouseEvents(enabled, { forward: true })
+  applyIgnoreMouse(enabled)
+}
+
+/**
+ * 穿透模式下的临时热区：鼠标移入猫身时可点，移出后恢复穿透。
+ * 不改写 settings.clickThrough。
+ */
+export function setPetMousePassthrough(ignore: boolean): void {
+  if (!petWindow || petWindow.isDestroyed()) return
+  if (!clickThroughDesired) {
+    applyIgnoreMouse(false)
+    return
+  }
+  if (menuOpen) {
+    applyIgnoreMouse(false)
+    return
+  }
+  applyIgnoreMouse(ignore)
+}
+
+/** 按当前期望状态重新应用穿透（菜单关闭后调用） */
+export function restorePetClickThrough(): void {
+  if (!petWindow || petWindow.isDestroyed()) return
+  if (menuOpen) {
+    applyIgnoreMouse(false)
+    return
+  }
+  applyIgnoreMouse(clickThroughDesired)
 }
 
 /** 展开菜单时按是否嵌套二级栏调整窗口尺寸；收起时还原 */
@@ -120,7 +166,7 @@ export function setPetMenuOpen(open: boolean, nested = false): Bounds | null {
     const y = current.y + current.height - height
     const next = clampToWorkArea({ x, y, width, height })
     petWindow.setBounds(next)
-    petWindow.setIgnoreMouseEvents(false)
+    applyIgnoreMouse(false)
     return next
   }
 
@@ -130,5 +176,10 @@ export function setPetMenuOpen(open: boolean, nested = false): Bounds | null {
   const y = current.y + current.height - height
   const next = clampToWorkArea({ x, y, width, height })
   petWindow.setBounds(next)
+  // 关菜单后按设置恢复穿透，避免锁死或穿透失效
+  const desired =
+    clickThroughDesired || Boolean(getState().settings.clickThrough)
+  clickThroughDesired = desired
+  applyIgnoreMouse(desired)
   return next
 }

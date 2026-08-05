@@ -104,69 +104,53 @@ body {
 
 .home__stage {
   border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(255, 250, 244, 0.7), rgba(255, 245, 235, 0.9)),
-    repeating-linear-gradient(
-      -12deg,
-      transparent,
-      transparent 11px,
-      rgba(201, 150, 110, 0.05) 11px,
-      rgba(201, 150, 110, 0.05) 12px
-    );
+  background-color: #f3ebe2;
+  background-size: cover;
+  background-position: center;
   border: 1px solid var(--line);
   display: grid;
   place-items: center;
-  min-height: 240px;
+  min-height: 260px;
   position: relative;
   overflow: hidden;
 }
 
 .home__stage.is-sleep {
-  background: linear-gradient(180deg, #e8e0f0 0%, #f3ebe2 70%);
+  filter: saturate(0.92) brightness(0.96);
 }
 
-.home__stage.is-study {
-  background: linear-gradient(180deg, #f5efe4 0%, #ebe3d4 100%);
-}
-
+.home__stage.is-study,
 .home__stage.is-focus {
-  background: linear-gradient(180deg, #e9ebe4 0%, #f3ebe2 100%);
+  filter: saturate(1.02);
 }
 
 .stage__cat {
-  width: 120px;
-  height: 110px;
-  border-radius: 50% 50% 45% 45%;
-  background: linear-gradient(160deg, #f2d6b8, #c9966e);
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  object-position: center bottom;
   position: relative;
-  animation: soft-bob 3.6s ease-in-out infinite;
   z-index: 1;
+  user-select: none;
+  -webkit-user-drag: none;
+  animation: soft-bob 3.6s ease-in-out infinite;
 }
 
-.stage__cat::before,
-.stage__cat::after {
-  content: '';
+.stage__shadow {
   position: absolute;
-  top: -8px;
-  width: 34px;
-  height: 34px;
-  background: #e8c4a0;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-}
-
-.stage__cat::before {
-  left: 16px;
-  transform: rotate(-10deg);
-}
-
-.stage__cat::after {
-  right: 16px;
-  transform: rotate(10deg);
+  width: 110px;
+  height: 28px;
+  bottom: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  object-fit: contain;
+  opacity: 0.45;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .stage__cat.is-sleep {
   animation: soft-bob 5s ease-in-out infinite;
-  transform: scale(0.95);
 }
 
 .stage__cat.is-eat {

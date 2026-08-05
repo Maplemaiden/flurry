@@ -5,6 +5,8 @@ export const IpcChannels = {
   OPEN_HOME: 'fluffy:open-home',
   CLOSE_HOME: 'fluffy:close-home',
   SET_CLICK_THROUGH: 'fluffy:set-click-through',
+  /** 穿透模式下临时忽略/接收鼠标（热区），不改持久设置 */
+  SET_PET_MOUSE_PASSTHROUGH: 'fluffy:set-pet-mouse-passthrough',
   MOVE_PET: 'fluffy:move-pet',
   /** 读取桌宠当前窗口位置 */
   GET_PET_BOUNDS: 'fluffy:get-pet-bounds',

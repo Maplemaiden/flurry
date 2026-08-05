@@ -1,13 +1,14 @@
 import './styles.css'
 import { INTIMACY_UNLOCKS } from '../../shared/defaults'
 import { getUnlocked } from '../../shared/intimacy'
-import type { AmbientSound, AppState, HomeScene } from '../../shared/types'
+import type { AmbientSound, AppState, CatBehavior, HomeScene } from '../../shared/types'
 import {
   playAmbient,
   playMeow,
   playPurr,
   setMuted
 } from '../shared/audio'
+import { CatSpritePlayer, artUrl, homeBackgroundUrl } from '../shared/catSprites'
 import { replyToMessage, type DialogueHook } from './dialogue'
 
 const onboardEl = document.getElementById('onboard') as HTMLElement
@@ -15,7 +16,8 @@ const chatBar = document.getElementById('chat-bar') as HTMLElement
 const interactPopover = document.getElementById('interact-popover') as HTMLElement
 const subtitleEl = document.getElementById('subtitle') as HTMLElement
 const stageEl = document.getElementById('stage') as HTMLElement
-const stageCat = document.getElementById('stage-cat') as HTMLElement
+const stageCat = document.getElementById('stage-cat') as HTMLImageElement
+const stageShadow = document.getElementById('stage-shadow') as HTMLImageElement
 const stageProp = document.getElementById('stage-prop') as HTMLElement
 const stageHint = document.getElementById('stage-hint') as HTMLElement
 const unlocksEl = document.getElementById('unlocks') as HTMLElement
@@ -32,6 +34,9 @@ const optAmbient = document.getElementById('opt-ambient') as HTMLSelectElement
 const optMuted = document.getElementById('opt-muted') as HTMLInputElement
 const optClick = document.getElementById('opt-clickthrough') as HTMLInputElement
 
+const homeSprites = new CatSpritePlayer(stageCat)
+stageShadow.src = artUrl('09_脚底投影', '椭圆投影.png')
+
 let scene: HomeScene = 'default'
 let appState: AppState | null = null
 let timerTick: ReturnType<typeof setInterval> | null = null
@@ -39,6 +44,28 @@ let timerTick: ReturnType<typeof setInterval> | null = null
 let feedbackUntil = 0
 let holdProp: { kind: string; emoji: string } | null = null
 let chatOpen = false
+let tempBehaviorUntil = 0
+
+function setHomeBehavior(behavior: CatBehavior, ms?: number): void {
+  homeSprites.setBehavior(behavior)
+  if (ms !== undefined) {
+    tempBehaviorUntil = Date.now() + ms
+    window.setTimeout(() => {
+      if (Date.now() < tempBehaviorUntil) return
+      syncHomeSprite(appState)
+    }, ms + 30)
+  } else {
+    tempBehaviorUntil = 0
+  }
+}
+
+function syncHomeSprite(state: AppState | null): void {
+  if (!state) return
+  if (Date.now() < tempBehaviorUntil) return
+  if (state.focusActive) setHomeBehavior('focus')
+  else if (state.catSleeping) setHomeBehavior('sleep')
+  else setHomeBehavior('idle')
+}
 
 function formatRemain(ms: number): string {
   const total = Math.max(0, Math.ceil(ms / 1000))
@@ -136,12 +163,23 @@ function render(state: AppState): void {
     unlocksEl.textContent = ''
   }
 
-  // scene 由共享 catSleeping 和 focusActive 驱动（study 场景在未专注时默认不用，视觉已与默认合）
+  // scene 由共享 catSleeping 和 focusActive 驱动
   const sleepVisual = state.catSleeping && !state.focusActive
   stageEl.classList.toggle('is-sleep', sleepVisual)
-  stageEl.classList.toggle('is-study', scene === 'study' && !state.focusActive)
+  stageEl.classList.toggle('is-study', scene === 'study' || state.focusActive)
   stageEl.classList.toggle('is-focus', state.focusActive)
   stageCat.classList.toggle('is-sleep', state.catSleeping || state.focusActive)
+
+  const bgScene: HomeScene = state.focusActive
+    ? 'study'
+    : state.catSleeping
+      ? 'sleep'
+      : scene === 'study'
+        ? 'study'
+        : 'default'
+  stageEl.style.backgroundImage = `linear-gradient(180deg, rgba(255,250,244,0.18), rgba(255,245,235,0.35)), url("${homeBackgroundUrl(bgScene)}")`
+
+  syncHomeSprite(state)
 
   const holdingFeedback = Date.now() < feedbackUntil
 
@@ -245,6 +283,7 @@ async function doFeed(): Promise<void> {
   }
   scene = 'default'
   stageCat.classList.add('is-eat')
+  setHomeBehavior('eat', 1600)
   setFeedback('好好吃～', 1800, { kind: 'food', emoji: '🐟' })
   playPurr(500)
   await window.fluffy.noteInteraction(2)
@@ -279,6 +318,7 @@ async function doGroom(): Promise<void> {
   }
   scene = 'default'
   stageCat.classList.add('is-groom')
+  setHomeBehavior('groom', 1400)
   setFeedback('梳得亮晶晶…', 1600)
   playPurr(450)
   await window.fluffy.noteInteraction(1)
@@ -435,7 +475,7 @@ optMuted.addEventListener('change', () => {
 optClick.addEventListener('change', () => {
   void patchSettings({ clickThrough: optClick.checked })
   if (optClick.checked) {
-    setFeedback('已开启点击穿透：桌宠点不到时，用托盘打开小窝', 4000)
+    setFeedback('已开启点击穿透：可移入猫身点击，或按 Ctrl+Alt+P / 托盘紧急唤回', 4500)
   }
 })
 

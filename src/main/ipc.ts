@@ -11,7 +11,12 @@ import {
 } from './focus'
 import { getState, setState } from './store'
 import { createHomeWindow, closeHomeWindow } from './windows/homeWindow'
-import { getPetWindow, setPetClickThrough, setPetMenuOpen } from './windows/petWindow'
+import {
+  getPetWindow,
+  setPetClickThrough,
+  setPetMenuOpen,
+  setPetMousePassthrough
+} from './windows/petWindow'
 
 function clampPetBounds(bounds: PetWindowBounds): PetWindowBounds {
   const point = {
@@ -60,6 +65,10 @@ export function registerIpc(): void {
     })
     broadcastState(next)
     return next
+  })
+
+  ipcMain.handle(IpcChannels.SET_PET_MOUSE_PASSTHROUGH, (_event, ignore: boolean) => {
+    setPetMousePassthrough(Boolean(ignore))
   })
 
   ipcMain.handle(IpcChannels.MOVE_PET, (_event, bounds: PetWindowBounds) => {

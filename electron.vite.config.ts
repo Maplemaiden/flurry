@@ -23,6 +23,7 @@ export default defineConfig({
     }
   },
   renderer: {
+    publicDir: resolve('resources'),
     build: {
       rollupOptions: {
         input: {
