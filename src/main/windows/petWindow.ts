@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron'
 import { join } from 'path'
-import { PET_MENU_WINDOW, PET_WINDOW } from '../../shared/defaults'
+import { PET_MENU_WINDOW, PET_MENU_WINDOW_NESTED, PET_WINDOW } from '../../shared/defaults'
 
 let petWindow: BrowserWindow | null = null
 let menuOpen = false
@@ -41,18 +41,33 @@ export function createPetWindow(): BrowserWindow {
     y: display.y + display.height - PET_WINDOW.height - 40,
     frame: false,
     transparent: true,
+    thickFrame: false,
+    movable: false,
+    roundedCorners: false,
+    backgroundColor: '#00000000',
     alwaysOnTop: true,
     resizable: false,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    fullscreenable: false,
     skipTaskbar: true,
     hasShadow: false,
+    useContentSize: true,
+    paintWhenInitiallyHidden: true,
+    title: '',
+    autoHideMenuBar: true,
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: false,
+      backgroundThrottling: false
     }
   })
+
+  petWindow.setBackgroundColor('#00000000')
 
   petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
   petWindow.setAlwaysOnTop(true, 'screen-saver')
@@ -86,20 +101,21 @@ export function setPetClickThrough(enabled: boolean): void {
   petWindow.setIgnoreMouseEvents(enabled, { forward: true })
 }
 
-/** 展开菜单时向上加高窗口，收起时还原 */
-export function setPetMenuOpen(open: boolean): Bounds | null {
+/** 展开菜单时按是否嵌套二级栏调整窗口尺寸；收起时还原 */
+export function setPetMenuOpen(open: boolean, nested = false): Bounds | null {
   if (!petWindow || petWindow.isDestroyed()) return null
 
   const current = petWindow.getBounds()
-  if (open === menuOpen) {
+  if (open === menuOpen && nested === false) {
     return { x: current.x, y: current.y, width: current.width, height: current.height }
   }
 
   menuOpen = open
 
   if (open) {
-    const width = PET_MENU_WINDOW.width
-    const height = PET_MENU_WINDOW.height
+    const target = nested ? PET_MENU_WINDOW_NESTED : PET_MENU_WINDOW
+    const width = target.width
+    const height = target.height
     const x = Math.round(current.x + (current.width - width) / 2)
     const y = current.y + current.height - height
     const next = clampToWorkArea({ x, y, width, height })

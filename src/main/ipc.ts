@@ -77,8 +77,8 @@ export function registerIpc(): void {
     return { x: b.x, y: b.y, width: b.width, height: b.height }
   })
 
-  ipcMain.handle(IpcChannels.SET_PET_MENU_OPEN, (_event, open: boolean) => {
-    return setPetMenuOpen(Boolean(open))
+  ipcMain.handle(IpcChannels.SET_PET_MENU_OPEN, (_event, open: boolean, nested?: boolean) => {
+    return setPetMenuOpen(Boolean(open), Boolean(nested))
   })
 
   ipcMain.handle(IpcChannels.NUDGE_PET, () => {

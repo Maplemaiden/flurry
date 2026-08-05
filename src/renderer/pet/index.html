@@ -7,21 +7,41 @@
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fluffy Pet</title>
+    <title></title>
+    <style>
+      html, body, #app {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        overflow: hidden !important;
+      }
+    </style>
   </head>
   <body>
     <div id="app">
       <div id="menu-backdrop" class="menu-backdrop" hidden></div>
 
-      <div id="quick-menu" class="quick-menu" hidden>
-        <p class="quick-menu__title">Flurry</p>
-        <button type="button" data-menu="home">打开温暖小窝</button>
-        <button type="button" data-menu="pet">摸摸我</button>
-        <button type="button" data-menu="mute" id="menu-mute">静音</button>
-        <button type="button" data-menu="close">收起</button>
+      <div class="menu-wrap" id="menu-wrap">
+        <div id="quick-menu" class="quick-menu" hidden>
+          <button type="button" data-menu="home">小窝</button>
+          <button type="button" data-menu="interact">互动</button>
+          <button type="button" data-menu="mute" id="menu-mute">静音</button>
+        </div>
+
+        <div id="interact-menu" class="interact-menu" hidden>
+          <button type="button" data-interact="study">学习</button>
+          <button type="button" data-interact="feed">喂养</button>
+          <button type="button" data-interact="play">游戏</button>
+          <button type="button" data-interact="groom">梳毛</button>
+          <button type="button" data-interact="sleep">睡觉</button>
+        </div>
       </div>
 
-      <div id="pet" class="pet" title="单击打开菜单 · 拖拽移动" role="img" aria-label="桌面猫咪">
+      <div id="pet" class="pet" title="双击打开菜单 · 拖动头部抚摸 · 拖动身体移动" role="img" aria-label="桌面猫咪">
+        <div class="pet__head-zone" id="pet-head" title="左右拖动抚摸"></div>
         <div class="pet__body"></div>
         <div class="pet__ear pet__ear--left"></div>
         <div class="pet__ear pet__ear--right"></div>

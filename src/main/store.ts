@@ -53,7 +53,11 @@ function mergeState(base: AppState, partial: Partial<AppState>): AppState {
     pendingPetEvent:
       partial.pendingPetEvent === undefined
         ? base.pendingPetEvent
-        : partial.pendingPetEvent
+        : partial.pendingPetEvent,
+    chatMessage:
+      partial.chatMessage === undefined ? base.chatMessage : partial.chatMessage,
+    catSleeping:
+      partial.catSleeping === undefined ? base.catSleeping : Boolean(partial.catSleeping)
   }
 }
 

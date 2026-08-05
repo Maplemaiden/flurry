@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flurry — 温暖小窝</title>
@@ -31,13 +31,18 @@
         <p class="stage__unlocks" id="unlocks"></p>
       </section>
 
+      <div class="home__interact" id="interact-popover" hidden>
+        <button type="button" data-interact="study">学习</button>
+        <button type="button" data-interact="feed">喂养</button>
+        <button type="button" data-interact="play">游戏</button>
+        <button type="button" data-interact="groom">梳毛</button>
+        <button type="button" data-interact="sleep">睡觉</button>
+      </div>
+
       <nav class="home__actions" aria-label="互动">
-        <button type="button" data-action="feed">喂养</button>
-        <button type="button" data-action="sleep">睡觉</button>
-        <button type="button" data-action="study">学习陪伴</button>
-        <button type="button" data-action="groom">梳毛</button>
-        <button type="button" data-action="focus" id="focus-btn">专注模式</button>
-        <button type="button" data-action="talk">说说话</button>
+        <button type="button" data-action="interact" id="interact-btn">互动</button>
+        <button type="button" data-action="study" id="focus-btn">学习陪伴</button>
+        <button type="button" data-action="talk" id="talk-btn">说说话</button>
       </nav>
 
       <section class="home__settings" aria-label="设置">
@@ -68,6 +73,24 @@
         </label>
       </section>
 
+      <section class="home__chat" id="chat-bar" hidden aria-label="说说话">
+        <div class="chat__prompts">
+          <button type="button" class="chat__prompt" data-prompt="今天天气怎么样">今天天气怎么样</button>
+          <button type="button" class="chat__prompt" data-prompt="你喜欢我吗">你喜欢我吗</button>
+          <button type="button" class="chat__prompt" data-prompt="你喜欢原神吗">你喜欢原神吗</button>
+          <button type="button" class="chat__reset" id="chat-reset" title="敬请期待" aria-label="重置">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path d="M12 4V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z" fill="currentColor"/>
+              <path d="M12 20v3l5-5-5-5v3a5 5 0 1 1-5-5h2a7 7 0 1 0 7 8z" fill="currentColor" transform="translate(0 0)"/>
+            </svg>
+          </button>
+        </div>
+        <div class="chat__input-row">
+          <input id="chat-input" type="text" placeholder="想说什么都可以，我在听。" maxlength="80" />
+          <button type="button" id="chat-send">发送</button>
+        </div>
+      </section>
+
       <section class="home__onboard" id="onboard" hidden>
         <h1>遇见你的猫</h1>
         <p>给它起个名字，开始一段温柔陪伴。</p>
@@ -79,23 +102,6 @@
           <button type="button" id="adopt-btn">领养</button>
           <button type="button" class="btn-ghost" id="onboard-later">先回桌面看看</button>
         </div>
-      </section>
-
-      <section class="home__talk" id="talk-panel" hidden>
-        <header class="talk__top">
-          <button type="button" class="talk__back" id="talk-close">← 返回小窝</button>
-        </header>
-        <div class="talk__body">
-          <p class="talk__eyebrow">说说话</p>
-          <h2 class="talk__heading">想和我说点什么？</h2>
-          <div id="talk-reply" class="talk__bubble" role="status">
-            想说什么都可以，我在听。
-          </div>
-        </div>
-        <footer class="talk__footer">
-          <input id="talk-input" type="text" placeholder="例如：今天好累…" maxlength="80" />
-          <button type="button" id="talk-send">发送</button>
-        </footer>
       </section>
     </div>
     <script type="module" src="./main.ts"></script>

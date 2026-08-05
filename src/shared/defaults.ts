@@ -14,17 +14,25 @@ export const DEFAULT_STATE: AppState = {
   focusEndsAt: null,
   lastInteractionAt: null,
   lastWarmCareAt: null,
-  pendingPetEvent: null
+  pendingPetEvent: null,
+  chatMessage: null,
+  catSleeping: false
 }
 
 export const PET_WINDOW = {
-  width: 160,
-  height: 160
+  width: 100,
+  height: 150
 } as const
 
-/** 桌宠快捷菜单展开时的窗口尺寸 */
+/** 桌宠快捷菜单展开时的窗口尺寸（缩小版，约原一半） */
 export const PET_MENU_WINDOW = {
-  width: 200,
+  width: 120,
+  height: 200
+} as const
+
+/** 桌宠快捷菜单展开「互动」嵌套栏时的窗口尺寸 */
+export const PET_MENU_WINDOW_NESTED = {
+  width: 150,
   height: 300
 } as const
 

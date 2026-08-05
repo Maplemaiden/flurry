@@ -21,8 +21,8 @@ const fluffyApi = {
   getPetBounds: (): Promise<PetWindowBounds | null> =>
     ipcRenderer.invoke(IpcChannels.GET_PET_BOUNDS),
 
-  setPetMenuOpen: (open: boolean): Promise<PetWindowBounds | null> =>
-    ipcRenderer.invoke(IpcChannels.SET_PET_MENU_OPEN, open),
+  setPetMenuOpen: (open: boolean, nested?: boolean): Promise<PetWindowBounds | null> =>
+    ipcRenderer.invoke(IpcChannels.SET_PET_MENU_OPEN, open, nested),
 
   nudgePet: (): Promise<AppState> => ipcRenderer.invoke(IpcChannels.NUDGE_PET),
 

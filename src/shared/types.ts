@@ -56,6 +56,10 @@ export interface AppState {
   lastWarmCareAt: number | null
   /** 待桌宠表演的一次性事件 */
   pendingPetEvent: PendingPetEvent
+  /** 聊天消息：被设置后桌宠气泡显示该文本，直到下一条覆盖 */
+  chatMessage: string | null
+  /** 是否处于睡觉状态（桌宠窗/小窝共享，用于跨窗口同步） */
+  catSleeping: boolean
 }
 
 export interface PetWindowBounds {
