@@ -1,6 +1,12 @@
 import { BrowserWindow } from 'electron'
 import { IpcChannels } from '../shared/channels'
-import { WARM_CARE_AFTER_MS, WARM_CARE_COOLDOWN_MS } from '../shared/defaults'
+import {
+  DAILY_STUDY_COIN_CAP,
+  FOCUS_COIN_REWARD,
+  WARM_CARE_AFTER_MS,
+  WARM_CARE_COOLDOWN_MS,
+  todayKey
+} from '../shared/defaults'
 import { bumpCatIntimacy } from '../shared/intimacy'
 import type { AppState } from '../shared/types'
 import { getState, setState } from './store'
@@ -44,7 +50,7 @@ export function startFocus(minutes?: number): AppState {
   return next
 }
 
-/** @param natural 计时自然结束 → 庆祝 + 亲密度 */
+/** @param natural 计时自然结束 → 庆祝 + 亲密度 + 小魚乾 */
 export function stopFocus(natural: boolean): AppState {
   clearFocusTimer()
   const current = getState()
@@ -52,12 +58,28 @@ export function stopFocus(natural: boolean): AppState {
     return current
   }
 
-  let next = setState({
+  // 自然结束时奖励小魚乾
+  let coinReward = 0
+  let dailyCoins = current.dailyCoins
+  if (natural) {
+    const today = todayKey()
+    if (dailyCoins.date !== today) {
+      dailyCoins = { date: today, petCoins: 0, studyCoins: 0, lastPetCoinAt: null }
+    }
+    if (dailyCoins.studyCoins < DAILY_STUDY_COIN_CAP) {
+      coinReward = Math.min(FOCUS_COIN_REWARD, DAILY_STUDY_COIN_CAP - dailyCoins.studyCoins)
+      dailyCoins = { ...dailyCoins, studyCoins: dailyCoins.studyCoins + coinReward }
+    }
+  }
+
+  const next = setState({
     focusActive: false,
     focusEndsAt: null,
     pendingPetEvent: natural ? 'celebrate' : null,
     lastInteractionAt: Date.now(),
-    cat: natural && current.cat ? bumpCatIntimacy(current.cat, 2) : current.cat
+    cat: natural && current.cat ? bumpCatIntimacy(current.cat, 2) : current.cat,
+    fishCoins: current.fishCoins + coinReward,
+    dailyCoins
   })
 
   broadcastState(next)

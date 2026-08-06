@@ -28,7 +28,9 @@ export default defineConfig({
       rollupOptions: {
         input: {
           pet: resolve(__dirname, 'src/renderer/pet/index.html'),
-          home: resolve(__dirname, 'src/renderer/home/index.html')
+          home: resolve(__dirname, 'src/renderer/home/index.html'),
+          shop: resolve(__dirname, 'src/renderer/shop/index.html'),
+          backpack: resolve(__dirname, 'src/renderer/backpack/index.html')
         }
       }
     }

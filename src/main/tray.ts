@@ -1,6 +1,7 @@
-import { Menu, Tray, nativeImage, app, nativeTheme, globalShortcut } from 'electron'
+import { Menu, Tray, nativeImage, nativeTheme, globalShortcut } from 'electron'
 import { existsSync } from 'fs'
 import { join } from 'path'
+import { quitFlurry, registerTrayDestroy } from './lifecycle'
 import { getState, setState } from './store'
 import { broadcastState } from './focus'
 import { createHomeWindow } from './windows/homeWindow'
@@ -108,7 +109,7 @@ function rebuildMenu(): void {
     {
       label: '退出 Flurry',
       click: () => {
-        app.quit()
+        quitFlurry()
       }
     }
   ])
@@ -135,6 +136,12 @@ export function createTray(): Tray {
   tray = new Tray(icon)
   tray.setToolTip('Flurry — 右键菜单 · 穿透锁死时按 Ctrl+Alt+P 唤回')
   rebuildMenu()
+  registerTrayDestroy(() => {
+    if (tray) {
+      tray.destroy()
+      tray = null
+    }
+  })
 
   tray.on('click', () => {
     rebuildMenu()

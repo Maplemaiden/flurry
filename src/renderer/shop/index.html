@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小魚乾雑貨鋪</title>
+  </head>
+  <body>
+    <div id="app" class="shop">
+      <!-- 水彩背景场景画 -->
+      <div class="shop__bg" id="shop-bg"></div>
+
+      <!-- 低侵入 UI 浮层 -->
+      <div class="shop__ui">
+        <!-- 右上 小魚乾余额 -->
+        <div class="shop__coins">
+          <span class="coin-icon">🐟</span>
+          <span class="coin-count" id="coin-count">0</span>
+        </div>
+
+        <!-- ① 类型选择：水彩木牌（无绳子，直接漂浮） -->
+        <nav class="category-tabs" id="category-tabs"></nav>
+
+        <!-- ② 商品展示：水彩插画卡片 -->
+        <div class="product-area">
+          <div class="product-grid" id="cabinet-grid"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

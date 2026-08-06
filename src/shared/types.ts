@@ -14,6 +14,7 @@ export type CatBehavior =
   | 'celebrate'
   | 'knead'
   | 'eat'
+  | 'stretch'
 
 /** 小家场景模式 */
 export type HomeScene = 'default' | 'sleep' | 'study'
@@ -22,6 +23,39 @@ export type HomeScene = 'default' | 'sleep' | 'study'
 export type PendingPetEvent = 'celebrate' | 'warm-care' | 'greet' | 'home-back' | null
 
 export type AmbientSound = 'none' | 'rain' | 'soft-piano' | 'fire'
+
+/** 商店物品分类 */
+export type ShopCategory = 'food' | 'drink' | 'toy' | 'study' | 'furniture' | 'clothes' | 'room' | 'skin'
+
+/** 商店物品定义 */
+export interface ShopItem {
+  id: string
+  name: string
+  category: ShopCategory
+  price: number
+  description: string
+  placeholder?: boolean
+}
+
+/** 道具使用效果（喂食/饮用/玩耍时触发） */
+export interface ItemEffect {
+  /** 桌宠播放的行为动画 */
+  behavior: CatBehavior
+  /** 气泡文本 */
+  bubble: string
+  /** 亲密度增量 */
+  intimacyDelta: number
+  /** 是否消耗品（食物/饮料消耗，道具/家具永久） */
+  consume: boolean
+}
+
+/** 每日小魚乾获取追踪（用于上限与跨日重置） */
+export interface DailyCoinTracker {
+  date: string
+  petCoins: number
+  studyCoins: number
+  lastPetCoinAt: number | null
+}
 
 export interface CatProfile {
   name: string
@@ -60,6 +94,12 @@ export interface AppState {
   chatMessage: string | null
   /** 是否处于睡觉状态（桌宠窗/小窝共享，用于跨窗口同步） */
   catSleeping: boolean
+  /** 小魚乾货币余额 */
+  fishCoins: number
+  /** 背包：物品ID → 数量（消耗品可叠加，永久品固定为1） */
+  backpack: Record<string, number>
+  /** 每日小魚乾获取追踪 */
+  dailyCoins: DailyCoinTracker
 }
 
 export interface PetWindowBounds {

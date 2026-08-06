@@ -51,7 +51,7 @@ body {
 /* 菜单容器：包住主栏 + 嵌套栏，位于小猫上方 */
 .menu-wrap {
   position: absolute;
-  bottom: 118px;
+  bottom: 94px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
@@ -59,29 +59,43 @@ body {
   flex-direction: column;
   align-items: stretch;
   gap: 4px;
+  transition: left 0.15s ease, transform 0.15s ease;
+}
+
+/* 窗口在屏幕右边缘时，菜单向左翻转 */
+.menu-wrap.is-flipped-right {
+  left: 4px;
+  transform: translateX(0);
+}
+
+/* 窗口在屏幕左边缘时，菜单向右翻转 */
+.menu-wrap.is-flipped-left {
+  left: auto;
+  right: 4px;
+  transform: translateX(0);
 }
 
 /* 主浮空栏：缩小到约原一半，降低透明度 */
 .quick-menu {
-  width: 120px;
-  padding: 5px;
-  border-radius: 10px;
-  /* 降低透明度：原 0.96 → 0.72 */
+  width: 110px;
+  padding: 4px;
+  border-radius: 8px;
   background: rgba(255, 250, 244, 0.72);
   border: 1px solid rgba(74, 55, 44, 0.14);
-  box-shadow: 0 4px 12px rgba(80, 50, 20, 0.12);
+  box-shadow: 0 2px 6px rgba(80, 50, 20, 0.12);
   display: none;
-  gap: 3px;
+  gap: 2px;
 }
 
 .quick-menu:not([hidden]) {
   display: grid;
+  grid-template-columns: 1fr 1fr;
 }
 
 .quick-menu button {
   border: none;
-  border-radius: 6px;
-  padding: 4px 6px;
+  border-radius: 5px;
+  padding: 3px 5px;
   background: rgba(243, 235, 226, 0.85);
   color: #4a372c;
   font-size: 10px;
@@ -95,14 +109,14 @@ body {
 
 /* 嵌套二级浮空栏：更紧凑 */
 .interact-menu {
-  width: 120px;
-  padding: 5px;
-  border-radius: 10px;
+  width: 110px;
+  padding: 4px;
+  border-radius: 8px;
   background: rgba(255, 250, 244, 0.66);
   border: 1px solid rgba(74, 55, 44, 0.12);
-  box-shadow: 0 4px 12px rgba(80, 50, 20, 0.1);
+  box-shadow: 0 2px 6px rgba(80, 50, 20, 0.1);
   display: none;
-  gap: 3px;
+  gap: 2px;
 }
 
 .interact-menu:not([hidden]) {
@@ -136,7 +150,7 @@ body {
 
 .pet {
   width: 100px;
-  height: 110px;
+  height: 85px;
   position: absolute;
   bottom: 0;
   left: 0;
@@ -170,37 +184,37 @@ body {
   -webkit-user-drag: none;
 }
 
-/* 头部感应区：覆盖耳朵到眼睛上方，用于左右拖拽抚摸 */
 .pet__head-zone {
   position: absolute;
-  top: 8px;
+  top: 4px;
   left: 10px;
   right: 10px;
-  height: 36px;
+  height: 32px;
   z-index: 3;
   cursor: pointer;
 }
 
 .bubble {
   position: absolute;
-  bottom: 112px;
+  bottom: 72px;
   left: 50%;
   transform: translateX(-50%);
-  min-width: 100px;
-  max-width: 130px;
-  padding: 6px 10px;
-  border-radius: 10px;
+  min-width: 44px;
+  max-width: 96px;
+  padding: 3px 7px;
+  border-radius: 8px;
   background: rgba(255, 252, 248, 0.96);
   color: #3a2a1e;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.22;
   text-align: center;
   pointer-events: none;
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(80, 50, 20, 0.18);
+  box-shadow: 0 2px 6px rgba(80, 50, 20, 0.14);
   word-break: break-all;
   white-space: normal;
+  overflow: visible;
 }
 
 .bubble[hidden] {

@@ -20,8 +20,15 @@ function clampToWorkArea(bounds: Bounds): Bounds {
     y: Math.round(bounds.y + bounds.height / 2)
   }
   const wa = screen.getDisplayNearestPoint(point).workArea
-  const x = Math.min(Math.max(bounds.x, wa.x), wa.x + wa.width - bounds.width)
-  const y = Math.min(Math.max(bounds.y, wa.y), wa.y + wa.height - bounds.height)
+  const margin = 4
+  const x = Math.min(
+    Math.max(bounds.x, wa.x + margin),
+    wa.x + wa.width - bounds.width - margin
+  )
+  const y = Math.min(
+    Math.max(bounds.y, wa.y + margin),
+    wa.y + wa.height - bounds.height - margin
+  )
   return { ...bounds, x, y }
 }
 
@@ -29,6 +36,24 @@ function applyIgnoreMouse(ignore: boolean): void {
   if (!petWindow || petWindow.isDestroyed()) return
   // 穿透必须是完整忽略：不要 { forward:true }，否则热区/移入事件会把穿透打穿
   petWindow.setIgnoreMouseEvents(ignore)
+}
+
+/**
+ * 压制 Windows 透明无边框窗上方的空标题栏残影（常呈蓝色）。
+ * Electron 在失焦时可能画出 phantom caption；重申 maximizable + 微抖尺寸强制重绘。
+ */
+export function suppressPetPhantomTitleBar(): void {
+  if (!petWindow || petWindow.isDestroyed()) return
+  petWindow.setMaximizable(false)
+  petWindow.setMinimizable(false)
+  // 微抖高度触发 DWM 重绘，清掉残影（不改变菜单展开后的逻辑尺寸）
+  if (menuOpen) return
+  const [w, h] = petWindow.getSize()
+  const wasResizable = petWindow.isResizable()
+  petWindow.setResizable(true)
+  petWindow.setSize(w, h + 1)
+  petWindow.setSize(w, h)
+  petWindow.setResizable(wasResizable)
 }
 
 export function getPetWindow(): BrowserWindow | null {
@@ -57,6 +82,8 @@ export function createPetWindow(): BrowserWindow {
     thickFrame: false,
     // 桌宠不抢焦点，避免 Windows 给透明无边框窗画出一条空标题栏（常呈蓝色）
     focusable: false,
+    // toolbar 类型在 Win 上更不易画出普通窗口 caption
+    ...(process.platform === 'win32' ? { type: 'toolbar' as const } : {}),
     movable: false,
     roundedCorners: false,
     backgroundColor: '#00000000',
@@ -70,7 +97,7 @@ export function createPetWindow(): BrowserWindow {
     hasShadow: false,
     useContentSize: true,
     paintWhenInitiallyHidden: true,
-    title: 'Flurry Pet',
+    title: '',
     autoHideMenuBar: true,
     show: false,
     webPreferences: {
@@ -85,6 +112,7 @@ export function createPetWindow(): BrowserWindow {
   petWindow.setBackgroundColor('#00000000')
   petWindow.setMenuBarVisibility(false)
   petWindow.removeMenu()
+  petWindow.setTitle('')
 
   petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
   petWindow.setAlwaysOnTop(true, 'screen-saver')
@@ -97,8 +125,7 @@ export function createPetWindow(): BrowserWindow {
 
   petWindow.once('ready-to-show', () => {
     petWindow?.showInactive()
-    // 再钉一次，压住 Windows 偶发画出的标题栏残影
-    petWindow?.setMaximizable(false)
+    suppressPetPhantomTitleBar()
     if (clickThroughDesired) applyIgnoreMouse(true)
   })
 
@@ -108,18 +135,13 @@ export function createPetWindow(): BrowserWindow {
   })
 
   petWindow.on('blur', () => {
-    // Electron/Windows 已知：透明无边框窗失焦时可能冒出空标题栏
-    if (petWindow && !petWindow.isDestroyed()) {
-      petWindow.setMaximizable(false)
-    }
+    suppressPetPhantomTitleBar()
     if (!menuOpen || !petWindow || petWindow.isDestroyed()) return
     petWindow.webContents.send('fluffy:pet-blur')
   })
 
   petWindow.on('focus', () => {
-    if (petWindow && !petWindow.isDestroyed()) {
-      petWindow.setMaximizable(false)
-    }
+    suppressPetPhantomTitleBar()
   })
 
   return petWindow
@@ -159,7 +181,7 @@ export function restorePetClickThrough(): void {
   applyIgnoreMouse(clickThroughDesired)
 }
 
-/** 展开菜单时按是否嵌套二级栏调整窗口尺寸；收起时还原 */
+/** 展开菜单时按是否嵌套二级栏调整窗口尺寸；收起时还原；自动处理边缘遮挡 */
 export function setPetMenuOpen(open: boolean, nested = false): Bounds | null {
   if (!petWindow || petWindow.isDestroyed()) return null
 
@@ -177,6 +199,27 @@ export function setPetMenuOpen(open: boolean, nested = false): Bounds | null {
     const x = Math.round(current.x + (current.width - width) / 2)
     const y = current.y + current.height - height
     const next = clampToWorkArea({ x, y, width, height })
+
+    // 检查是否需要翻转菜单：当窗口距离屏幕边缘 <= 24px 时翻转
+    const wa = screen.getDisplayNearestPoint({ x: next.x + next.width / 2, y: next.y + next.height / 2 }).workArea
+    const rightEdge = next.x + next.width
+    const leftEdge = next.x
+    const screenRight = wa.x + wa.width
+    const screenLeft = wa.x
+
+    const EDGE_THRESHOLD = 24
+    const flipRight = (screenRight - rightEdge) <= EDGE_THRESHOLD
+    const flipLeft = (leftEdge - screenLeft) <= EDGE_THRESHOLD
+
+    const wc = petWindow.webContents
+    if (flipRight && !flipLeft) {
+      wc.send('fluffy:menu-flip', 'right')
+    } else if (flipLeft && !flipRight) {
+      wc.send('fluffy:menu-flip', 'left')
+    } else {
+      wc.send('fluffy:menu-flip', 'none')
+    }
+
     petWindow.setBounds(next)
     applyIgnoreMouse(false)
     return next
@@ -188,6 +231,8 @@ export function setPetMenuOpen(open: boolean, nested = false): Bounds | null {
   const y = current.y + current.height - height
   const next = clampToWorkArea({ x, y, width, height })
   petWindow.setBounds(next)
+  // 关菜单时重置翻转状态
+  petWindow.webContents.send('fluffy:menu-flip', 'none')
   // 关菜单后按设置恢复穿透，避免锁死或穿透失效
   const desired =
     clickThroughDesired || Boolean(getState().settings.clickThrough)

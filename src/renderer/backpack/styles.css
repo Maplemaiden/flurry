@@ -1,0 +1,380 @@
+/* ================================================================
+   小猫的背包 — 水彩木柜子背景 + UI浮层
+   ================================================================ */
+
+:root {
+  --cream: #FFF5E6;
+  --cream-soft: #FDF8F0;
+  --caramel: #C68A5B;
+  --caramel-deep: #B0784A;
+  --warm-gray: #D4C5B2;
+  --peach: #FAD6C5;
+  --mint: #B5D3C7;
+  --sage: #9DC4B0;
+  --ink: #5a4232;
+  --ink-soft: #7a604a;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans', sans-serif;
+  color: var(--ink);
+  background: #fff;
+}
+
+/* ================================================================
+   整体容器
+   ================================================================ */
+.backpack {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: var(--cream);
+  user-select: none;
+}
+
+/* ================================================================
+   背景画层
+   ================================================================ */
+.backpack__bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  filter: saturate(1.02);
+}
+
+/* ================================================================
+   UI浮层
+   ================================================================ */
+.backpack__ui {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.backpack__ui > * {
+  pointer-events: auto;
+}
+
+/* —— 顶栏 —— */
+.backpack__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px 6px;
+}
+
+.backpack__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--cream-soft);
+  background: linear-gradient(180deg, rgba(198, 138, 91, 0.9), rgba(176, 120, 74, 0.92));
+  padding: 4px 14px;
+  border-radius: 10px 10px 16px 16px;
+  border: 1.5px solid rgba(140, 90, 50, 0.4);
+  box-shadow: 0 2px 6px rgba(140, 90, 50, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(1px);
+}
+
+.backpack__title-icon {
+  font-size: 18px;
+}
+
+.backpack__shop-btn {
+  border: 1.5px solid rgba(140, 90, 50, 0.35);
+  border-radius: 999px;
+  padding: 5px 16px;
+  background: linear-gradient(135deg, rgba(255, 250, 220, 0.95), rgba(255, 235, 180, 0.92));
+  color: #8a6500;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(140, 100, 30, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.backpack__shop-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(140, 100, 30, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* —— 分类标签 —— */
+.backpack__tabs {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 20px 6px;
+}
+
+.backpack__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1.5px solid rgba(140, 90, 50, 0.4);
+  border-radius: 8px 8px 14px 14px;
+  padding: 4px 12px;
+  background: linear-gradient(180deg, rgba(198, 138, 91, 0.88) 0%, rgba(176, 120, 74, 0.92) 100%);
+  color: var(--cream-soft);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(140, 90, 50, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(1px);
+}
+
+.backpack__tab:hover {
+  transform: translateY(-1.5px);
+  background: linear-gradient(180deg, rgba(210, 150, 101, 0.95) 0%, rgba(186, 130, 84, 0.95) 100%);
+  box-shadow: 0 4px 8px rgba(140, 90, 50, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.backpack__tab.is-active {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(240, 196, 176, 0.98), rgba(234, 164, 138, 0.98));
+  border-color: rgba(200, 120, 90, 0.55);
+  box-shadow: 0 3px 9px rgba(210, 130, 100, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-1.5px);
+}
+
+.backpack__tab-icon {
+  font-size: 13px;
+}
+
+/* —— 主体（物品网格嵌入木柜格子区） —— */
+.backpack__body {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  padding: 10px 40px 50px;
+  position: relative;
+}
+
+.backpack__grid {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  align-content: start;
+  padding: 4px 6px;
+}
+
+.backpack__grid::-webkit-scrollbar {
+  width: 5px;
+}
+
+.backpack__grid::-webkit-scrollbar-track {
+  background: rgba(255, 245, 220, 0.3);
+}
+
+.backpack__grid::-webkit-scrollbar-thumb {
+  background: rgba(176, 120, 74, 0.35);
+  border-radius: 3px;
+}
+
+/* —— 物品卡片 —— */
+.item-card {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(253, 248, 240, 0.97) 0%, rgba(250, 238, 220, 0.94) 100%);
+  border: 1.5px solid rgba(198, 138, 91, 0.28);
+  box-shadow: 0 3px 8px rgba(140, 90, 50, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  transition: all 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.1);
+}
+
+.item-card:hover {
+  transform: translateY(-3px) scale(1.015);
+  border-color: rgba(240, 196, 176, 0.65);
+  box-shadow: 0 6px 16px rgba(198, 138, 91, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+}
+
+.item-card__icon {
+  width: 100%;
+  height: 58px;
+  object-fit: cover;
+  margin-bottom: 6px;
+  border-radius: 7px;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.85) 25%, rgba(250, 230, 210, 0.5) 70%, transparent 100%);
+  border: 1px dashed rgba(198, 138, 91, 0.18);
+  padding: 3px;
+}
+
+.item-card__emoji {
+  width: 100%;
+  height: 58px;
+  font-size: 34px;
+  line-height: 58px;
+  text-align: center;
+  margin-bottom: 6px;
+  border-radius: 7px;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.85) 25%, rgba(250, 230, 210, 0.5) 70%, transparent 100%);
+  border: 1px dashed rgba(198, 138, 91, 0.18);
+}
+
+.item-card__name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-card__desc {
+  font-size: 10px;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  min-height: 28px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.item-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 6px;
+}
+
+.item-card__count {
+  font-size: 11px;
+  color: #8a6500;
+  font-weight: 800;
+  background: linear-gradient(135deg, rgba(255, 250, 220, 0.95), rgba(255, 235, 180, 0.92));
+  border: 1px solid rgba(200, 150, 50, 0.25);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.item-card__use-btn {
+  flex: 1;
+  border: 1.5px solid rgba(140, 90, 50, 0.4);
+  border-radius: 6px;
+  padding: 4px 10px;
+  background: linear-gradient(180deg, var(--caramel) 0%, var(--caramel-deep) 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  box-shadow: 0 2px 5px rgba(168, 116, 79, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.item-card__use-btn:hover:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 3px 6px rgba(168, 116, 79, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+}
+
+.item-card__use-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.item-card__use-btn:disabled {
+  background: linear-gradient(180deg, #ccc2b2, #beb4a4);
+  border-color: rgba(160, 150, 130, 0.5);
+  cursor: not-allowed;
+  box-shadow: none;
+  color: #807464;
+}
+
+/* —— 空状态 —— */
+.backpack__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px 60px;
+  color: var(--ink-soft);
+  text-align: center;
+  pointer-events: none;
+}
+
+.backpack__empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.7;
+  filter: drop-shadow(0 2px 3px rgba(90, 60, 30, 0.1));
+}
+
+.backpack__empty p {
+  margin: 4px 0;
+  font-size: 14px;
+  background: rgba(253, 248, 240, 0.7);
+  padding: 2px 10px;
+  border-radius: 6px;
+  backdrop-filter: blur(1px);
+}
+
+.backpack__empty-hint {
+  font-size: 12px !important;
+  color: var(--ink-soft);
+  opacity: 0.85;
+}
+
+/* —— Toast —— */
+.backpack__toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(90, 66, 50, 0.94), rgba(110, 80, 60, 0.92));
+  color: #fffaf4;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  animation: toast-in 0.25s ease;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

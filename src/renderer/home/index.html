@@ -44,34 +44,69 @@
         <button type="button" data-action="interact" id="interact-btn">互动</button>
         <button type="button" data-action="study" id="focus-btn">学习陪伴</button>
         <button type="button" data-action="talk" id="talk-btn">说说话</button>
+        <button type="button" data-action="shop" id="shop-btn">商店</button>
+        <button type="button" data-action="backpack" id="backpack-btn">背包</button>
+        <button type="button" data-action="settings" id="settings-btn">设置</button>
       </nav>
 
-      <section class="home__settings" aria-label="设置">
-        <label>
-          透明度
-          <input id="opt-opacity" type="range" min="0.3" max="1" step="0.05" />
-        </label>
-        <label>
-          专注时长（分）
-          <input id="opt-focus-min" type="number" min="1" max="180" />
-        </label>
-        <label>
-          环境音
-          <select id="opt-ambient">
-            <option value="rain">雨声</option>
-            <option value="soft-piano">轻柔</option>
-            <option value="fire">篝火</option>
-            <option value="none">关闭</option>
-          </select>
-        </label>
-        <label class="check">
-          <input id="opt-muted" type="checkbox" />
-          静音
-        </label>
-        <label class="check">
-          <input id="opt-clickthrough" type="checkbox" />
-          点击穿透（开启后桌宠不可点；Ctrl+Alt+P / 托盘可关）
-        </label>
+      <section class="home__settings-panel" id="settings-panel" hidden aria-label="设置">
+        <div class="settings-panel__card">
+          <header class="settings-panel__header">
+            <h2>设置</h2>
+            <button type="button" class="settings-panel__close" id="settings-close">关闭</button>
+          </header>
+
+          <div class="settings-panel__body">
+            <div class="settings-row">
+              <span class="settings-row__label">小猫名字</span>
+              <div class="settings-row__field settings-row__field--inline">
+                <input id="opt-cat-name" type="text" maxlength="12" placeholder="例如：年糕" autocomplete="off" />
+                <button type="button" id="opt-cat-name-save">保存</button>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <label class="settings-row__label" for="opt-opacity">桌宠透明度</label>
+              <div class="settings-row__field">
+                <input id="opt-opacity" type="range" min="0.3" max="1" step="0.05" />
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <label class="settings-row__label" for="opt-focus-min">专注时长（分）</label>
+              <div class="settings-row__field">
+                <input id="opt-focus-min" type="number" min="1" max="180" />
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <label class="settings-row__label" for="opt-ambient">环境音</label>
+              <div class="settings-row__field">
+                <select id="opt-ambient">
+                  <option value="rain">雨声</option>
+                  <option value="soft-piano">轻柔粉噪</option>
+                  <option value="fire">篝火</option>
+                  <option value="none">关闭</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-row settings-row--toggle">
+              <label class="settings-row__label" for="opt-muted">静音</label>
+              <div class="settings-row__field">
+                <input id="opt-muted" type="checkbox" />
+              </div>
+            </div>
+
+            <div class="settings-row settings-row--toggle">
+              <label class="settings-row__label" for="opt-clickthrough">点击穿透</label>
+              <div class="settings-row__field settings-row__field--hint">
+                <input id="opt-clickthrough" type="checkbox" />
+                <p class="settings-hint">开启后桌宠不可点；可用 Ctrl+Alt+P 或托盘关闭</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="home__chat" id="chat-bar" hidden aria-label="说说话">

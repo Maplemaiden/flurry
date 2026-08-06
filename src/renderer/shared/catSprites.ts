@@ -1,28 +1,22 @@
 import type { CatBehavior } from '../../shared/types'
+import clipManifest from './clip-manifest.json'
 
-/** MVP 默认猫：灰白坐姿猫（后续可按领养选择扩展） */
-export const DEFAULT_CAT_FOLDER = '01_灰白坐姿猫'
+/** 插值帧动画默认猫种（英文目录名） */
+export const DEFAULT_CAT_FOLDER = clipManifest.defaultCat as string
 
-type SpriteClip = {
-  folder: string
-  frames: number
-  loop: boolean
-  fps: number
+type ClipManifest = {
+  defaultCat: string
+  fps: Record<string, number>
+  behaviorToAction: Record<string, string>
+  legacyCatMap: Record<string, string>
+  frames: Record<string, string[]>
 }
 
-const CLIPS: Record<CatBehavior, SpriteClip> = {
-  idle: { folder: '待机', frames: 4, loop: true, fps: 4 },
-  walk: { folder: '行走', frames: 4, loop: true, fps: 6 },
-  sleep: { folder: '睡眠', frames: 4, loop: true, fps: 2 },
-  groom: { folder: '舔毛', frames: 3, loop: true, fps: 4 },
-  yawn: { folder: '打哈欠', frames: 3, loop: false, fps: 3 },
-  pet: { folder: '抚摸反应', frames: 2, loop: false, fps: 4 },
-  drag: { folder: '拖拽', frames: 2, loop: true, fps: 4 },
-  focus: { folder: '专注', frames: 3, loop: true, fps: 3 },
-  celebrate: { folder: '庆祝', frames: 4, loop: false, fps: 6 },
-  knead: { folder: '踩奶', frames: 3, loop: true, fps: 5 },
-  // 暂无独立喂食帧，用庆祝表现开心吃完
-  eat: { folder: '庆祝', frames: 4, loop: false, fps: 5 }
+const manifest = clipManifest as ClipManifest
+
+export function resolveCatFolder(catFolder?: string): string {
+  if (!catFolder) return DEFAULT_CAT_FOLDER
+  return manifest.legacyCatMap[catFolder] ?? catFolder
 }
 
 export function artUrl(...parts: string[]): string {
@@ -36,51 +30,81 @@ export function homeBackgroundUrl(scene: 'default' | 'sleep' | 'study'): string 
   return artUrl('01_小窝背景', '温馨小家.jpg')
 }
 
-export function frameUrl(catFolder: string, clipFolder: string, frameIndex: number): string {
-  const n = String(frameIndex).padStart(2, '0')
-  return artUrl('02_猫咪', catFolder, clipFolder, `${clipFolder}_${n}.png`)
+function actionForBehavior(behavior: CatBehavior): string {
+  return manifest.behaviorToAction[behavior] ?? 'idle'
+}
+
+function frameFiles(action: string): string[] {
+  return manifest.frames[action] ?? manifest.frames.idle ?? []
+}
+
+export function frameUrl(catFolder: string, action: string, fileName: string): string {
+  const cat = resolveCatFolder(catFolder)
+  return encodeURI(`/frames/${cat}/${action}/${fileName}`)
 }
 
 export class CatSpritePlayer {
   private img: HTMLImageElement
   private behavior: CatBehavior = 'idle'
-  private frame = 1
+  private frame = 0
   private timer: ReturnType<typeof setInterval> | null = null
   private catFolder: string
 
   constructor(img: HTMLImageElement, catFolder = DEFAULT_CAT_FOLDER) {
     this.img = img
-    this.catFolder = catFolder
+    this.catFolder = resolveCatFolder(catFolder)
     this.applyFrame()
     this.start()
+  }
+
+  setCatFolder(catFolder: string): void {
+    this.catFolder = resolveCatFolder(catFolder)
+    this.applyFrame()
   }
 
   setBehavior(behavior: CatBehavior): void {
     if (this.behavior === behavior) return
     this.behavior = behavior
-    this.frame = 1
+    this.frame = 0
     this.applyFrame()
     this.start()
   }
 
-  private clip(): SpriteClip {
-    return CLIPS[this.behavior]
+  private action(): string {
+    return actionForBehavior(this.behavior)
+  }
+
+  private files(): string[] {
+    return frameFiles(this.action())
+  }
+
+  private fps(): number {
+    const action = this.action()
+    return manifest.fps[action] ?? manifest.fps[this.behavior] ?? 12
+  }
+
+  private looping(): boolean {
+    // 非循环：打哈欠 / 伸懒腰 / 庆祝 / 吃东西
+    return !['yawn', 'stretch', 'celebrate', 'eat'].includes(this.behavior)
   }
 
   private applyFrame(): void {
-    const clip = this.clip()
-    this.img.src = frameUrl(this.catFolder, clip.folder, this.frame)
+    const files = this.files()
+    if (!files.length) return
+    const idx = Math.min(this.frame, files.length - 1)
+    const file = files[idx]!
+    this.img.src = frameUrl(this.catFolder, this.action(), file)
     this.img.alt = this.behavior
   }
 
   private start(): void {
     if (this.timer) clearInterval(this.timer)
-    const clip = this.clip()
-    const ms = Math.max(80, Math.round(1000 / clip.fps))
+    const ms = Math.max(40, Math.round(1000 / this.fps()))
     this.timer = setInterval(() => {
-      const c = this.clip()
-      if (this.frame >= c.frames) {
-        if (c.loop) this.frame = 1
+      const files = this.files()
+      if (!files.length) return
+      if (this.frame >= files.length - 1) {
+        if (this.looping()) this.frame = 0
         else return
       } else {
         this.frame += 1

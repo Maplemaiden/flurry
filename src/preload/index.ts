@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IpcChannels } from '../shared/channels'
-import type { AppState, PetWindowBounds } from '../shared/types'
+import type { AppState, ItemEffect, PetWindowBounds, ShopCategory } from '../shared/types'
 
 const fluffyApi = {
   getState: (): Promise<AppState> => ipcRenderer.invoke(IpcChannels.GET_STATE),
@@ -50,6 +50,36 @@ const fluffyApi = {
 
   noteInteraction: (intimacyDelta?: number): Promise<AppState> =>
     ipcRenderer.invoke(IpcChannels.NOTE_INTERACTION, intimacyDelta),
+
+  openShop: (): Promise<void> => ipcRenderer.invoke(IpcChannels.OPEN_SHOP),
+
+  buyItem: (itemId: string): Promise<AppState> =>
+    ipcRenderer.invoke(IpcChannels.BUY_ITEM, itemId),
+
+  earnPetCoins: (): Promise<{ state: AppState; earned: number }> =>
+    ipcRenderer.invoke(IpcChannels.EARN_PET_COINS),
+
+  openBackpack: (category?: ShopCategory): Promise<void> =>
+    ipcRenderer.invoke(IpcChannels.OPEN_BACKPACK, category),
+
+  useItem: (itemId: string): Promise<{ state: AppState; effect: ItemEffect | null }> =>
+    ipcRenderer.invoke(IpcChannels.USE_ITEM, itemId),
+
+  onBackpackCategory: (callback: (category: ShopCategory) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, category: ShopCategory): void => {
+      callback(category)
+    }
+    ipcRenderer.on('fluffy:backpack-category', listener)
+    return () => ipcRenderer.removeListener('fluffy:backpack-category', listener)
+  },
+
+  onMenuFlip: (callback: (direction: 'left' | 'right' | 'none') => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, direction: 'left' | 'right' | 'none'): void => {
+      callback(direction)
+    }
+    ipcRenderer.on('fluffy:menu-flip', listener)
+    return () => ipcRenderer.removeListener('fluffy:menu-flip', listener)
+  },
 
   onStateChanged: (callback: (state: AppState) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, state: AppState): void => {

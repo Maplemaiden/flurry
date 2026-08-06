@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小猫的背包</title>
+  </head>
+  <body>
+    <div id="app" class="backpack">
+      <!-- 水彩木柜子背景画 -->
+      <div class="backpack__bg" id="backpack-bg"></div>
+
+      <!-- UI浮层 -->
+      <div class="backpack__ui">
+        <!-- 顶栏 -->
+        <header class="backpack__header">
+          <div class="backpack__title">
+            <span class="backpack__title-icon">🎒</span>
+            <span>小猫的背包</span>
+          </div>
+          <button type="button" class="backpack__shop-btn" id="goto-shop">去商店</button>
+        </header>
+
+        <!-- 分类标签 -->
+        <nav class="backpack__tabs" id="category-tabs"></nav>
+
+        <!-- 物品网格（嵌入木柜格子区） -->
+        <main class="backpack__body">
+          <div class="backpack__grid" id="backpack-grid"></div>
+          <div class="backpack__empty" id="empty-state" hidden>
+            <div class="backpack__empty-icon">🐾</div>
+            <p>这里还空空的…</p>
+            <p class="backpack__empty-hint">去商店给小猫买点好东西吧～</p>
+          </div>
+        </main>
+      </div>
+
+      <div class="backpack__toast" id="toast" hidden></div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

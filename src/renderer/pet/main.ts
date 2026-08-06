@@ -2,7 +2,15 @@ import './styles.css'
 import { IDLE_SLEEP_AFTER_MS } from '../../shared/defaults'
 import type { AppState, CatBehavior, PetWindowBounds } from '../../shared/types'
 import { CatSpritePlayer } from '../shared/catSprites'
-import { playCelebrate, playMeow, playPurr, setMuted } from '../shared/audio'
+import {
+  playBgm,
+  playCelebrate,
+  playEatSfx,
+  playMeow,
+  playPetSfx,
+  playPurr,
+  setMuted
+} from '../shared/audio'
 import { BehaviorMachine, GREETINGS, WARM_CARE_LINES, pick } from './behavior'
 
 const petEl = document.getElementById('pet') as HTMLDivElement
@@ -125,7 +133,7 @@ function handlePendingEvent(state: AppState): void {
   if (ev === 'greet') {
     const name = state.cat?.name
     showBubble(name ? `${pick(GREETINGS)} · ${name}` : '双击我打开菜单～', 3500)
-    machine.set('yawn', 1800)
+    machine.set('stretch', 2200)
     playMeow()
   } else if (ev === 'celebrate') {
     machine.set('celebrate', 2800)
@@ -147,9 +155,19 @@ function handlePendingEvent(state: AppState): void {
   void window.fluffy.clearPetEvent()
 }
 
+function syncBgm(state: AppState): void {
+  if (state.settings.muted) {
+    playBgm('none')
+    return
+  }
+  if (state.focusActive) playBgm('focus', 0.16)
+  else playBgm('desktop', 0.14)
+}
+
 function syncFromState(state: AppState): void {
   appState = state
   setMuted(state.settings.muted)
+  syncBgm(state)
   petEl.style.opacity = String(state.settings.opacity)
   syncMuteLabel(state)
 
@@ -241,12 +259,20 @@ function doPet(): void {
 
   machine.set('pet', 900, 'idle')
   showBubble('咕噜…')
+  playPetSfx()
   playPurr()
 
   const now = Date.now()
   const gain = appState?.cat && now - lastPetGainAt > 8000 ? 1 : 0
   if (gain) lastPetGainAt = now
   void window.fluffy.noteInteraction(gain)
+
+  // 小魚乾获取（有冷却和每日上限）
+  void window.fluffy.earnPetCoins().then(({ earned }) => {
+    if (earned > 0) {
+      showBubble(`+${earned}🐟`, 1200)
+    }
+  })
 }
 
 function doGroom(): void {
@@ -275,6 +301,7 @@ function doFeed(): void {
   }
   machine.set('eat', 1600, appState?.focusActive ? 'focus' : 'idle')
   showBubble('好好吃～ 🐟', 1800)
+  playEatSfx()
   playPurr(500)
   void window.fluffy.noteInteraction(2)
 }
@@ -431,6 +458,19 @@ menuEl.addEventListener('click', async (e) => {
       await closeMenu()
       await window.fluffy.openHome()
       break
+    case 'shop':
+      await closeMenu()
+      await window.fluffy.openShop()
+      break
+    case 'backpack':
+      await closeMenu()
+      try {
+        await window.fluffy.openBackpack('food')
+      } catch (e) {
+        console.error('[pet] openBackpack failed:', e)
+        alert('打开背包失败，请重试\n\n' + String(e))
+      }
+      break
     case 'interact':
       await toggleNested()
       break
@@ -453,21 +493,49 @@ interactEl.addEventListener('click', (e) => {
   switch (action) {
     case 'groom':
       doGroom()
+      scheduleAutoClose()
       break
     case 'feed':
-      doFeed()
+      // 打开背包选择食物（选项框）
+      void (async () => {
+        await closeMenu()
+        try {
+          await window.fluffy.openBackpack('food')
+        } catch (e) {
+          console.error('[pet] openBackpack(food) failed:', e)
+          alert('打开背包失败，请重试\n\n' + String(e))
+        }
+      })()
+      break
+    case 'play':
+      // 打开背包选择互动道具
+      void (async () => {
+        await closeMenu()
+        try {
+          await window.fluffy.openBackpack('toy')
+        } catch (e) {
+          console.error('[pet] openBackpack(toy) failed:', e)
+          alert('打开背包失败，请重试\n\n' + String(e))
+        }
+      })()
+      break
+    case 'study':
+      // 打开背包选择学习物品
+      void (async () => {
+        await closeMenu()
+        try {
+          await window.fluffy.openBackpack('study')
+        } catch (e) {
+          console.error('[pet] openBackpack(study) failed:', e)
+          alert('打开背包失败，请重试\n\n' + String(e))
+        }
+      })()
       break
     case 'sleep':
       doSleep()
-      break
-    case 'study':
-      placeholder('学习')
-      break
-    case 'play':
-      placeholder('游戏')
+      scheduleAutoClose()
       break
   }
-  scheduleAutoClose()
 })
 
 window.fluffy.onPetBlur(() => {
@@ -487,6 +555,17 @@ async function boot(): Promise<void> {
   syncFromState(state)
   applyVisual(machine.get())
   window.fluffy.onStateChanged(syncFromState)
+  
+  // 监听菜单翻转事件（处理屏幕边缘遮挡）
+  window.fluffy.onMenuFlip((direction: 'left' | 'right' | 'none') => {
+    menuWrap.classList.remove('is-flipped-left', 'is-flipped-right')
+    if (direction === 'right') {
+      menuWrap.classList.add('is-flipped-right')
+    } else if (direction === 'left') {
+      menuWrap.classList.add('is-flipped-left')
+    }
+  })
+  
   startAutonomousLoop()
 }
 

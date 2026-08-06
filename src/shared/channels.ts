@@ -23,7 +23,17 @@ export const IpcChannels = {
   CLEAR_PET_EVENT: 'fluffy:clear-pet-event',
   /** 记录互动时间（可选带亲密度增量） */
   NOTE_INTERACTION: 'fluffy:note-interaction',
-  STATE_CHANGED: 'fluffy:state-changed'
+  STATE_CHANGED: 'fluffy:state-changed',
+  /** 打开商店窗口 */
+  OPEN_SHOP: 'fluffy:open-shop',
+  /** 购买商店物品 */
+  BUY_ITEM: 'fluffy:buy-item',
+  /** 抚摸获取小魚乾（含冷却与每日上限） */
+  EARN_PET_COINS: 'fluffy:earn-pet-coins',
+  /** 打开背包窗口（可选传入初始分类筛选） */
+  OPEN_BACKPACK: 'fluffy:open-backpack',
+  /** 使用背包物品（消耗品扣减，触发桌宠动画） */
+  USE_ITEM: 'fluffy:use-item'
 } as const
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels]

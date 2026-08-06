@@ -4,7 +4,11 @@ import { getUnlocked } from '../../shared/intimacy'
 import type { AmbientSound, AppState, CatBehavior, HomeScene } from '../../shared/types'
 import {
   playAmbient,
+  playBgm,
+  playEatSfx,
+  playKneadSfx,
   playMeow,
+  playPetSfx,
   playPurr,
   setMuted
 } from '../shared/audio'
@@ -14,6 +18,7 @@ import { replyToMessage, type DialogueHook } from './dialogue'
 const onboardEl = document.getElementById('onboard') as HTMLElement
 const chatBar = document.getElementById('chat-bar') as HTMLElement
 const interactPopover = document.getElementById('interact-popover') as HTMLElement
+const settingsPanel = document.getElementById('settings-panel') as HTMLElement
 const subtitleEl = document.getElementById('subtitle') as HTMLElement
 const stageEl = document.getElementById('stage') as HTMLElement
 const stageCat = document.getElementById('stage-cat') as HTMLImageElement
@@ -33,6 +38,8 @@ const optFocusMin = document.getElementById('opt-focus-min') as HTMLInputElement
 const optAmbient = document.getElementById('opt-ambient') as HTMLSelectElement
 const optMuted = document.getElementById('opt-muted') as HTMLInputElement
 const optClick = document.getElementById('opt-clickthrough') as HTMLInputElement
+const optCatName = document.getElementById('opt-cat-name') as HTMLInputElement
+const optCatNameSave = document.getElementById('opt-cat-name-save') as HTMLButtonElement
 
 const homeSprites = new CatSpritePlayer(stageCat)
 stageShadow.src = artUrl('09_脚底投影', '椭圆投影.png')
@@ -44,6 +51,7 @@ let timerTick: ReturnType<typeof setInterval> | null = null
 let feedbackUntil = 0
 let holdProp: { kind: string; emoji: string } | null = null
 let chatOpen = false
+let settingsOpen = false
 let tempBehaviorUntil = 0
 
 function setHomeBehavior(behavior: CatBehavior, ms?: number): void {
@@ -101,11 +109,14 @@ function applyHook(hook: DialogueHook): void {
   stageCat.classList.remove('is-knead', 'is-eat', 'is-groom')
   if (hook === 'knead') {
     stageCat.classList.add('is-knead')
+    playKneadSfx()
     playPurr(700)
     window.setTimeout(() => stageCat.classList.remove('is-knead'), 2000)
   } else if (hook === 'nuzzle') {
+    playPetSfx()
     playPurr(400)
   } else if (hook === 'celebrate') {
+    playMeow()
     playPurr(500)
   }
 }
@@ -114,6 +125,7 @@ function syncAmbient(state: AppState): void {
   setMuted(state.settings.muted)
   if (state.settings.muted) {
     playAmbient('none')
+    playBgm('none')
     return
   }
   if (state.focusActive || scene === 'sleep') {
@@ -121,6 +133,8 @@ function syncAmbient(state: AppState): void {
   } else {
     playAmbient('none')
   }
+  if (state.focusActive) playBgm('focus', 0.16)
+  else playBgm('home', 0.18)
 }
 
 function syncActionButtons(state: AppState): void {
@@ -128,7 +142,9 @@ function syncActionButtons(state: AppState): void {
     const action = btn.dataset.action
     const active =
       (action === 'study' && state.focusActive) ||
-      (action === 'interact' && !interactPopover.hidden)
+      (action === 'interact' && !interactPopover.hidden) ||
+      (action === 'settings' && settingsOpen) ||
+      (action === 'talk' && chatOpen)
     btn.classList.toggle('is-active', Boolean(active))
   })
 
@@ -150,6 +166,11 @@ function render(state: AppState): void {
   optAmbient.value = state.settings.ambient
   optMuted.checked = state.settings.muted
   optClick.checked = state.settings.clickThrough
+  if (document.activeElement !== optCatName) {
+    optCatName.value = state.cat?.name ?? ''
+    optCatName.disabled = !state.cat
+    optCatNameSave.disabled = !state.cat
+  }
 
   if (state.cat) {
     const unlocked = getUnlocked(state.cat.intimacy)
@@ -285,6 +306,7 @@ async function doFeed(): Promise<void> {
   stageCat.classList.add('is-eat')
   setHomeBehavior('eat', 1600)
   setFeedback('好好吃～', 1800, { kind: 'food', emoji: '🐟' })
+  playEatSfx()
   playPurr(500)
   await window.fluffy.noteInteraction(2)
   window.setTimeout(() => {
@@ -326,6 +348,7 @@ async function doGroom(): Promise<void> {
 }
 
 interactBtn.addEventListener('click', () => {
+  if (settingsOpen) void toggleSettings(false)
   interactPopover.hidden = !interactPopover.hidden
   if (appState) syncActionButtons(appState)
 })
@@ -343,19 +366,40 @@ interactPopover.addEventListener('click', async (e) => {
 
   switch (action) {
     case 'feed':
-      await doFeed()
-      break
+      // 打开背包选择食物（选项框）
+      interactPopover.hidden = true
+      try {
+        await window.fluffy.openBackpack('food')
+      } catch (e) {
+        console.error('[home] openBackpack(food) failed:', e)
+        alert('打开背包失败，请重试\n\n' + String(e))
+      }
+      return
+    case 'play':
+      // 打开背包选择互动道具
+      interactPopover.hidden = true
+      try {
+        await window.fluffy.openBackpack('toy')
+      } catch (e) {
+        console.error('[home] openBackpack(toy) failed:', e)
+        alert('打开背包失败，请重试\n\n' + String(e))
+      }
+      return
+    case 'study':
+      // 打开背包选择学习物品
+      interactPopover.hidden = true
+      try {
+        await window.fluffy.openBackpack('study')
+      } catch (e) {
+        console.error('[home] openBackpack(study) failed:', e)
+        alert('打开背包失败，请重试\n\n' + String(e))
+      }
+      return
     case 'sleep':
       await doSleep()
       break
     case 'groom':
       await doGroom()
-      break
-    case 'study':
-      placeholder('学习')
-      break
-    case 'play':
-      placeholder('游戏')
       break
   }
 
@@ -373,6 +417,20 @@ document.querySelector('.home__actions')?.addEventListener('click', async (e) =>
   const state = await window.fluffy.getState()
 
   switch (action) {
+    case 'shop':
+      await window.fluffy.openShop()
+      return
+    case 'backpack':
+      try {
+        await window.fluffy.openBackpack('food')
+      } catch (e) {
+        console.error('[home] openBackpack failed:', e)
+        alert('打开背包失败，请重试\n\n' + String(e))
+      }
+      return
+    case 'settings':
+      await toggleSettings()
+      return
     case 'study': {
       // 学习陪伴与专注模式合并：单击切换专注
       if (!state.cat) {
@@ -405,18 +463,77 @@ document.querySelector('.home__actions')?.addEventListener('click', async (e) =>
   render(await window.fluffy.getState())
 })
 
+async function toggleSettings(force?: boolean): Promise<void> {
+  settingsOpen = force ?? !settingsOpen
+  settingsPanel.hidden = !settingsOpen
+  if (settingsOpen) {
+    interactPopover.hidden = true
+    if (chatOpen) {
+      chatOpen = false
+      chatBar.hidden = true
+    }
+    const state = await window.fluffy.getState()
+    optCatName.value = state.cat?.name ?? ''
+    optCatName.disabled = !state.cat
+    optCatNameSave.disabled = !state.cat
+    if (state.cat) optCatName.focus()
+  }
+  if (appState) syncActionButtons(appState)
+}
+
+document.getElementById('settings-close')?.addEventListener('click', () => {
+  void toggleSettings(false)
+})
+
+settingsPanel.addEventListener('click', (e) => {
+  if (e.target === settingsPanel) void toggleSettings(false)
+})
+
+async function saveCatName(): Promise<void> {
+  const state = await window.fluffy.getState()
+  if (!state.cat) {
+    setFeedback('先领养一只小猫吧', 2000)
+    return
+  }
+  const name = optCatName.value.trim().slice(0, 12)
+  if (!name) {
+    setFeedback('名字不能为空', 1600)
+    optCatName.value = state.cat.name
+    return
+  }
+  if (name === state.cat.name) {
+    setFeedback('名字没有变化', 1400)
+    return
+  }
+  const next = await window.fluffy.setState({
+    cat: { ...state.cat, name }
+  })
+  setFeedback(`以后就叫你「${next.cat?.name}」啦`, 2200)
+  render(next)
+}
+
+optCatNameSave.addEventListener('click', () => {
+  void saveCatName()
+})
+
+optCatName.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') void saveCatName()
+})
+
 /* ---------- 说说话：底部聊天栏 + 桌宠气泡 ---------- */
 
 async function toggleChat(): Promise<void> {
   chatOpen = !chatOpen
   chatBar.hidden = !chatOpen
   if (chatOpen) {
+    if (settingsOpen) await toggleSettings(false)
     // 桌宠气泡弹出问候
     await window.fluffy.setState({ chatMessage: '今天要聊什么呢？喵~' })
     chatInput.focus()
   } else {
     setFeedback('已回到小窝', 1600)
   }
+  if (appState) syncActionButtons(appState)
 }
 
 async function sendChat(text: string): Promise<void> {
