@@ -105,6 +105,38 @@
                 <p class="settings-hint">开启后桌宠不可点；可用 Ctrl+Alt+P 或托盘关闭</p>
               </div>
             </div>
+
+            <div class="settings-dev" id="settings-dev" hidden>
+              <h3 class="settings-dev__title">开发者测试</h3>
+              <p class="settings-dev__hint">仅 <code>npm run dev:test</code> 启动时可用</p>
+
+              <div class="settings-dev__toggles">
+                <label class="settings-dev__check">
+                  <input id="test-infinite-coins" type="checkbox" />
+                  无限小魚乾
+                </label>
+                <label class="settings-dev__check">
+                  <input id="test-skip-caps" type="checkbox" />
+                  跳过每日上限
+                </label>
+                <label class="settings-dev__check">
+                  <input id="test-fast-focus" type="checkbox" />
+                  专注 10 秒
+                </label>
+              </div>
+
+              <div class="settings-dev__actions">
+                <button type="button" class="settings-dev__btn" data-test="skip-onboard">跳过领养</button>
+                <button type="button" class="settings-dev__btn" data-test="add-coins">+999 币</button>
+                <button type="button" class="settings-dev__btn" data-test="fill-backpack">填满背包</button>
+                <button type="button" class="settings-dev__btn" data-test="clear-backpack">清空背包</button>
+                <button type="button" class="settings-dev__btn" data-test="reset-daily">重置每日上限</button>
+                <button type="button" class="settings-dev__btn" data-test="trigger-event" data-payload="celebrate">庆祝</button>
+                <button type="button" class="settings-dev__btn" data-test="trigger-event" data-payload="warm-care">暖心</button>
+                <button type="button" class="settings-dev__btn" data-test="trigger-event" data-payload="greet">迎接</button>
+                <button type="button" class="settings-dev__btn settings-dev__btn--warn" data-test="reset-state">重置存档</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -1,5 +1,6 @@
 import './styles.css'
 import { SHOP_CATEGORIES, SHOP_ITEMS, getItemsByCategory } from '../../shared/shop-items'
+import { hasInfiniteCoins } from '../../shared/testMode'
 import type { AppState, ShopCategory, ShopItem } from '../../shared/types'
 import fishCookieImg from './assets/fish-cookie.jpg'
 import milkPuddingImg from './assets/milk-pudding.jpg'
@@ -105,7 +106,8 @@ function createItemCard(item: ShopItem): HTMLElement {
   const backpack = appState?.backpack ?? {}
   const ownedCount = backpack[item.id] ?? 0
   const owned = ownedCount > 0
-  const canAfford = (appState?.fishCoins ?? 0) >= item.price
+  const infinite = appState ? hasInfiniteCoins(appState.settings) : false
+  const canAfford = infinite || (appState?.fishCoins ?? 0) >= item.price
 
   card.className = 'shop__item'
   if (owned) card.classList.add('is-owned')
@@ -169,7 +171,8 @@ async function handleBuy(item: ShopItem, e: Event): Promise<void> {
 }
 
 function renderCoins(): void {
-  coinCountEl.textContent = String(appState?.fishCoins ?? 0)
+  const infinite = appState ? hasInfiniteCoins(appState.settings) : false
+  coinCountEl.textContent = infinite ? '∞' : String(appState?.fishCoins ?? 0)
 }
 
 function renderAll(): void {

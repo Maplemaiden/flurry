@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IpcChannels } from '../shared/channels'
 import type { AppState, ItemEffect, PetWindowBounds, ShopCategory } from '../shared/types'
+import type { TestAction } from '../shared/testMode'
 
 const fluffyApi = {
   getState: (): Promise<AppState> => ipcRenderer.invoke(IpcChannels.GET_STATE),
@@ -64,6 +65,9 @@ const fluffyApi = {
 
   useItem: (itemId: string): Promise<{ state: AppState; effect: ItemEffect | null }> =>
     ipcRenderer.invoke(IpcChannels.USE_ITEM, itemId),
+
+  testAction: (action: TestAction, payload?: string): Promise<AppState> =>
+    ipcRenderer.invoke(IpcChannels.TEST_ACTION, action, payload),
 
   onBackpackCategory: (callback: (category: ShopCategory) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, category: ShopCategory): void => {

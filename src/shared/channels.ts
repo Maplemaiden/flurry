@@ -33,7 +33,9 @@ export const IpcChannels = {
   /** 打开背包窗口（可选传入初始分类筛选） */
   OPEN_BACKPACK: 'fluffy:open-backpack',
   /** 使用背包物品（消耗品扣减，触发桌宠动画） */
-  USE_ITEM: 'fluffy:use-item'
+  USE_ITEM: 'fluffy:use-item',
+  /** 开发者测试动作（须 testMode） */
+  TEST_ACTION: 'fluffy:test-action'
 } as const
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels]

@@ -8,6 +8,7 @@ import {
   todayKey
 } from '../shared/defaults'
 import { bumpCatIntimacy } from '../shared/intimacy'
+import { skipsEconomyCaps, TEST_FAST_FOCUS_SECONDS, usesFastFocus } from '../shared/testMode'
 import type { AppState } from '../shared/types'
 import { getState, setState } from './store'
 
@@ -33,8 +34,10 @@ function clearFocusTimer(): void {
 export function startFocus(minutes?: number): AppState {
   clearFocusTimer()
   const current = getState()
+  const fast = usesFastFocus(current.settings)
   const mins = Math.max(1, Math.min(180, minutes ?? current.settings.focusMinutes))
-  const focusEndsAt = Date.now() + mins * 60 * 1000
+  const durationMs = fast ? TEST_FAST_FOCUS_SECONDS * 1000 : mins * 60 * 1000
+  const focusEndsAt = Date.now() + durationMs
 
   const next = setState({
     focusActive: true,
@@ -44,7 +47,7 @@ export function startFocus(minutes?: number): AppState {
 
   focusTimer = setTimeout(() => {
     stopFocus(true)
-  }, mins * 60 * 1000)
+  }, durationMs)
 
   broadcastState(next)
   return next
@@ -61,13 +64,16 @@ export function stopFocus(natural: boolean): AppState {
   // 自然结束时奖励小魚乾
   let coinReward = 0
   let dailyCoins = current.dailyCoins
+  const skipCaps = skipsEconomyCaps(current.settings)
   if (natural) {
     const today = todayKey()
     if (dailyCoins.date !== today) {
       dailyCoins = { date: today, petCoins: 0, studyCoins: 0, lastPetCoinAt: null }
     }
-    if (dailyCoins.studyCoins < DAILY_STUDY_COIN_CAP) {
-      coinReward = Math.min(FOCUS_COIN_REWARD, DAILY_STUDY_COIN_CAP - dailyCoins.studyCoins)
+    if (skipCaps || dailyCoins.studyCoins < DAILY_STUDY_COIN_CAP) {
+      coinReward = skipCaps
+        ? FOCUS_COIN_REWARD
+        : Math.min(FOCUS_COIN_REWARD, DAILY_STUDY_COIN_CAP - dailyCoins.studyCoins)
       dailyCoins = { ...dailyCoins, studyCoins: dailyCoins.studyCoins + coinReward }
     }
   }

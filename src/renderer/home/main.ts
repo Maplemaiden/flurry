@@ -2,6 +2,7 @@ import './styles.css'
 import { INTIMACY_UNLOCKS } from '../../shared/defaults'
 import { getUnlocked } from '../../shared/intimacy'
 import type { AmbientSound, AppState, CatBehavior, HomeScene } from '../../shared/types'
+import type { TestAction } from '../../shared/testMode'
 import {
   playAmbient,
   playBgm,
@@ -40,6 +41,10 @@ const optMuted = document.getElementById('opt-muted') as HTMLInputElement
 const optClick = document.getElementById('opt-clickthrough') as HTMLInputElement
 const optCatName = document.getElementById('opt-cat-name') as HTMLInputElement
 const optCatNameSave = document.getElementById('opt-cat-name-save') as HTMLButtonElement
+const settingsDev = document.getElementById('settings-dev') as HTMLElement
+const testInfiniteCoins = document.getElementById('test-infinite-coins') as HTMLInputElement
+const testSkipCaps = document.getElementById('test-skip-caps') as HTMLInputElement
+const testFastFocus = document.getElementById('test-fast-focus') as HTMLInputElement
 
 const homeSprites = new CatSpritePlayer(stageCat)
 stageShadow.src = artUrl('09_脚底投影', '椭圆投影.png')
@@ -170,6 +175,14 @@ function render(state: AppState): void {
     optCatName.value = state.cat?.name ?? ''
     optCatName.disabled = !state.cat
     optCatNameSave.disabled = !state.cat
+  }
+
+  const testOn = Boolean(state.settings.testMode)
+  settingsDev.hidden = !testOn
+  if (testOn) {
+    testInfiniteCoins.checked = Boolean(state.settings.testInfiniteCoins)
+    testSkipCaps.checked = Boolean(state.settings.testSkipCaps)
+    testFastFocus.checked = Boolean(state.settings.testFastFocus)
   }
 
   if (state.cat) {
@@ -594,6 +607,44 @@ optClick.addEventListener('change', () => {
   if (optClick.checked) {
     setFeedback('已开启点击穿透：桌宠点不到也拖不动；用 Ctrl+Alt+P 或托盘关闭。重启后会自动关闭穿透', 5000)
   }
+})
+
+testInfiniteCoins.addEventListener('change', () => {
+  void patchSettings({ testInfiniteCoins: testInfiniteCoins.checked })
+})
+testSkipCaps.addEventListener('change', () => {
+  void patchSettings({ testSkipCaps: testSkipCaps.checked })
+})
+testFastFocus.addEventListener('change', () => {
+  void patchSettings({ testFastFocus: testFastFocus.checked })
+})
+
+document.querySelectorAll<HTMLButtonElement>('[data-test]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.test
+    if (!action) return
+    void (async () => {
+      if (action === 'reset-state' && !confirm('确定重置存档？测试开关会保留。')) return
+      const next = await window.fluffy.testAction(action as TestAction, btn.dataset.payload)
+      if (action === 'skip-onboard') onboardEl.hidden = true
+      if (action === 'reset-state') {
+        scene = 'default'
+        chatOpen = false
+        chatBar.hidden = true
+      }
+      const labels: Record<string, string> = {
+        'skip-onboard': '已跳过领养',
+        'add-coins': '已加 999 小魚乾',
+        'fill-backpack': '背包已填满',
+        'clear-backpack': '背包已清空',
+        'reset-daily': '每日上限已重置',
+        'trigger-event': '已触发桌宠事件',
+        'reset-state': '存档已重置'
+      }
+      setFeedback(labels[action] ?? '完成', 1800)
+      render(next)
+    })()
+  })
 })
 
 async function boot(): Promise<void> {

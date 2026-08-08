@@ -2,6 +2,8 @@ import { ipcMain, screen } from 'electron'
 import { IpcChannels } from '../shared/channels'
 import { DAILY_PET_COIN_CAP, PET_COIN_COOLDOWN_MS, todayKey } from '../shared/defaults'
 import { findShopItem, getItemEffect, isConsumable } from '../shared/shop-items'
+import type { TestAction } from '../shared/testMode'
+import { hasInfiniteCoins, skipsEconomyCaps } from '../shared/testMode'
 import type { AppState, ItemEffect, PetWindowBounds, ShopCategory } from '../shared/types'
 import {
   broadcastState,
@@ -21,6 +23,7 @@ import {
   setPetMousePassthrough
 } from './windows/petWindow'
 import { createShopWindow } from './windows/shopWindow'
+import { runTestAction } from './testMode'
 
 function clampPetBounds(bounds: PetWindowBounds): PetWindowBounds {
   const point = {
@@ -134,10 +137,11 @@ export function registerIpc(): void {
       const state = getState()
       const owned = state.backpack[itemId] ?? 0
       if (!isConsumable(item) && owned > 0) return state
-      if (state.fishCoins < item.price) return state
+      const infinite = hasInfiniteCoins(state.settings)
+      if (!infinite && state.fishCoins < item.price) return state
       const nextBackpack = { ...state.backpack, [itemId]: owned + 1 }
       const next = setState({
-        fishCoins: state.fishCoins - item.price,
+        fishCoins: infinite ? state.fishCoins : state.fishCoins - item.price,
         backpack: nextBackpack
       })
       broadcastState(next)
@@ -146,20 +150,27 @@ export function registerIpc(): void {
 
     { ch: IpcChannels.EARN_PET_COINS, fn: (): { state: AppState; earned: number } => {
       const current = getState()
+      const skip = skipsEconomyCaps(current.settings)
       const now = Date.now()
       let dailyCoins = current.dailyCoins
       const today = todayKey()
       if (dailyCoins.date !== today) {
         dailyCoins = { date: today, petCoins: 0, studyCoins: 0, lastPetCoinAt: null }
       }
-      if (dailyCoins.lastPetCoinAt && now - dailyCoins.lastPetCoinAt < PET_COIN_COOLDOWN_MS) {
+      if (
+        !skip &&
+        dailyCoins.lastPetCoinAt &&
+        now - dailyCoins.lastPetCoinAt < PET_COIN_COOLDOWN_MS
+      ) {
         return { state: current, earned: 0 }
       }
-      if (dailyCoins.petCoins >= DAILY_PET_COIN_CAP) {
+      if (!skip && dailyCoins.petCoins >= DAILY_PET_COIN_CAP) {
         return { state: current, earned: 0 }
       }
       const earned = Math.random() < 0.5 ? 1 : 2
-      const gained = Math.min(earned, DAILY_PET_COIN_CAP - dailyCoins.petCoins)
+      const gained = skip
+        ? earned
+        : Math.min(earned, DAILY_PET_COIN_CAP - dailyCoins.petCoins)
       dailyCoins = {
         ...dailyCoins,
         petCoins: dailyCoins.petCoins + gained,
@@ -215,6 +226,10 @@ export function registerIpc(): void {
       })
       broadcastState(next)
       return { state: next, effect }
+    }},
+
+    { ch: IpcChannels.TEST_ACTION, fn: (_event, action: TestAction, payload?: string): AppState => {
+      return runTestAction(action, payload)
     }}
   ]
 

@@ -4,6 +4,7 @@ import { registerIpc } from './ipc'
 import { isAppQuitting, quitFlurry } from './lifecycle'
 import { getState, setState } from './store'
 import { createTray, registerEscapeShortcut } from './tray'
+import { applyTestBootFlags } from './testMode'
 import { createHomeWindow } from './windows/homeWindow'
 import {
   createPetWindow,
@@ -39,12 +40,17 @@ if (!gotLock) {
 
     // 注册 IPC —— 包裹在 try-catch 中，确保失败也能继续启动
     try {
-      console.log('[main] calling registerIpc()...')
       registerIpc()
       console.log('[main] registerIpc() returned successfully')
     } catch (err) {
       console.error('[main] FATAL: registerIpc() threw an exception:', err)
       console.error('[main] Stack trace:', (err as Error)?.stack)
+    }
+
+    try {
+      applyTestBootFlags()
+    } catch (e) {
+      console.error('[main] applyTestBootFlags failed:', e)
     }
 
     try {

@@ -388,6 +388,76 @@ body {
   line-height: 1.4;
 }
 
+.settings-dev {
+  margin-top: 8px;
+  padding: 14px 20px 18px;
+  border-top: 1px dashed rgba(74, 55, 44, 0.15);
+  background: rgba(255, 245, 230, 0.55);
+}
+
+.settings-dev__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--caramel-deep);
+  margin-bottom: 4px;
+}
+
+.settings-dev__hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.settings-dev__hint code {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.settings-dev__toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+}
+
+.settings-dev__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.settings-dev__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-dev__btn {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: #fff;
+  color: var(--caramel-deep);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.settings-dev__btn:hover {
+  background: var(--caramel);
+  color: #fffaf4;
+  border-color: var(--caramel);
+}
+
+.settings-dev__btn--warn:hover {
+  background: #c96a5a;
+  border-color: #c96a5a;
+}
+
 .home__onboard {
   position: absolute;
   inset: 0;

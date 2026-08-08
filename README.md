@@ -1,9 +1,10 @@
 # Flurry
 
-轻量级电脑桌面宠物（Windows / macOS）。  
+轻量级桌面宠物（Windows / macOS · Electron + TypeScript）。
+
 在屏幕角落放一团毛茸茸的小生命：不打扰、记得你、安静陪着你。
 
-> 项目代称：Fluffy · 状态：概念设计 + 工程骨架
+仓库：https://github.com/Maplemaiden/flurry
 
 ## 理念
 
@@ -11,17 +12,14 @@
 - **不打扰的陪伴** — 无强制弹窗，被注意时才回应
 - **双向情感流动** — 你照顾它，它也轻轻照顾你的情绪
 
-## 技术栈
+## 当前进度（MVP 可玩）
 
-| 层 | 选型 |
-|----|------|
-| 桌面壳 | Electron + electron-vite + TypeScript |
-| 桌宠窗 | 无边框透明置顶浮窗，支持拖拽 / 点击穿透 |
-| 小窝 UI | HTML / CSS / TypeScript 渲染进程 |
-| 持久化 | 本地 JSON（亲密度、设置、领养状态） |
-| 动画 | MVP 用 CSS 占位；后续按资源接帧动画 / Spine / Rive |
-
-**不引入完整游戏引擎**（Unity / Godot 等）。本项目是轻量桌宠 + App 式小窝，系统窗口与托盘能力比引擎场景更重要。
+- 透明置顶桌宠：双击菜单、摸头抚摸、拖拽移动、自主行为
+- 温暖小窝：领养、互动、学习陪伴、说说话、设置
+- 商店 / 背包 / 小魚乾经济
+- 插值帧动画（10 猫种资源已入库，默认灰白猫）
+- 正式 BGM / 白噪音 / 音效
+- 词库对话、专注计时、暖心事件、本地持久化
 
 ## 快速开始
 
@@ -33,55 +31,80 @@ npm run dev
 其他脚本：
 
 ```bash
+npm run dev:test    # 开发者测试模式（无限币、跳过上限、10 秒专注等）
 npm run build       # 生产构建
 npm run typecheck   # TypeScript 检查
 ```
 
-### 试用操作
+**注意**
 
-- 拖拽桌宠移动位置
-- 单击抚摸，双击打开小窝
-- 托盘：打开小窝 / 显隐桌宠 / 退出
+- 主进程改动后需重启 `npm run dev`
+- 退出请用托盘（任务栏 `^`）→ **退出 Flurry**，不要只关小窝窗
+- 点击穿透开启后桌宠不可点，可用 **Ctrl+Alt+P** 或托盘唤回
 
-## 功能范围（MVP）
+### 日常操作
 
-**必须包含**
+| 操作 | 说明 |
+|------|------|
+| 双击桌宠 | 打开 / 关闭快捷菜单 |
+| 拖头部 | 抚摸 |
+| 拖身体 | 移动位置 |
+| 小窝 → 设置 | 改名、透明度、环境音、穿透等 |
+| 托盘 | 开小窝 / 显隐桌宠 / 退出 |
 
-- 1 只可选猫咪，桌面基础行为与抚摸反应
-- 小家：喂养、睡觉、学习陪伴
-- 专注模式（手动启动 + 结束庆祝占位）
-- 基础文字对话（预设回应库）
-- 暖心时刻触发（开机迎接等，逐步补齐）
+## 开发者测试模式
 
-**暂不纳入**
+用 `npm run dev:test` 启动（设置 `FLUFFY_TEST=1`），小窝 **设置** 底部会出现 **开发者测试** 面板：
 
-- 多猫性格体系、完整旅行收集
-- 小游戏、房间深度装饰
-- AI 情绪识别与生成式对话
-- 社区 / 皮肤商店
+- 无限小魚乾、跳过每日上限、专注 10 秒
+- 跳过领养、填满背包、触发庆祝/暖心/迎接、重置存档等
+
+正式 `npm run build` 不含测试入口。详见 `HANDOFF.md`。
+
+## 技术栈
+
+| 层 | 选型 |
+|----|------|
+| 桌面壳 | Electron 35 + electron-vite + TypeScript |
+| 桌宠窗 | 无边框透明置顶，支持拖拽 / 点击穿透 |
+| 渲染 | HTML / CSS / TS（pet / home / shop / backpack） |
+| 动画 | `resources/frames` 插值帧 + `clip-manifest.json` |
+| 音频 | `resources/audio`（ambient / bgm / sfx） |
+| 持久化 | `%APPDATA%/fluffy/fluffy/state.json` |
+
+不引入完整游戏引擎；轻量桌宠 + 多窗口 + 托盘保活是核心。
 
 ## 目录结构
 
 ```
 src/
-  main/              # 主进程：窗口、托盘、IPC、存储
-    windows/         # 桌宠窗 / 小窝窗
-  preload/           # contextBridge → window.fluffy
-  shared/            # 类型、默认值、IPC 通道
+  main/                 # 主进程：窗口、托盘、IPC、存储、专注计时
+    windows/            # pet / home / shop / backpack
+    lifecycle.ts        # quitFlurry 可靠退出
+    testMode.ts         # 开发者测试（FLUFFY_TEST=1）
+  preload/              # contextBridge → window.fluffy
+  shared/               # 类型、通道、默认值、商店、testMode
   renderer/
-    pet/             # 桌面宠物浮窗
-    home/            # 温暖小窝（领养 / 照顾 / 对话）
-resources/           # 托盘图标等静态资源
+    pet/                # 桌面宠物
+    home/               # 温暖小窝
+    shop/               # 小魚乾杂货铺
+    backpack/           # 背包
+    shared/             # catSprites、audio、clip-manifest
+resources/
+  art/                  # 静帧美术、小窝背景
+  frames/               # 插值帧（约 750MB）
+  audio/                # 音频资源
+  tray.png
 ```
 
-更完整的产品说明见仓库内策划文档：`桌宠游戏 MVP 策划方案(2).html`。
+## 文档
 
-## 迭代路线（概念）
-
-1. **桌面精灵** — 动画、抚摸、拖拽、自主行为
-2. **温暖小窝** — 照顾玩法与亲密度框架
-3. **专注与对话** — 轻音乐、暖心回应
-4. **旅行惊喜** — 明信片与纪念品等扩展
+| 文件 | 用途 |
+|------|------|
+| `HANDOFF.md` | 工程交接、架构、已知坑、改哪里 |
+| `DEVLOG.md` | 按日开发记录 |
+| `target_prompt.md` | 实现约束与验收（冲突时以此为准） |
+| `桌宠游戏 MVP 策划方案(2).html` | 产品概念 |
 
 ## 许可证
 

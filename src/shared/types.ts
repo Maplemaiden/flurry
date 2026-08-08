@@ -75,6 +75,14 @@ export interface AppSettings {
   muted: boolean
   /** 专注 / 睡眠环境音 */
   ambient: AmbientSound
+  /** 开发者测试模式（仅 FLUFFY_TEST=1 启动时开启） */
+  testMode?: boolean
+  /** 无限小魚乾，购买不扣费 */
+  testInfiniteCoins?: boolean
+  /** 跳过抚摸/专注每日上限与冷却 */
+  testSkipCaps?: boolean
+  /** 专注改为 10 秒结束（便于测庆祝） */
+  testFastFocus?: boolean
 }
 
 export interface AppState {
